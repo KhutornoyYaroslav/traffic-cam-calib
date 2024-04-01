@@ -6,7 +6,7 @@ from core.camera.functional import eulers2rotmat
 class Camera:
     """
     Camera class allows you to project 3d world points onto the image plane.
-    It uses the right-handed coordinate system.
+    It uses the right-handed coordinate system. Positive rotations are clockwise.
     See for more info: https://www.evl.uic.edu/ralph/508S98/coordinates.html.
     """
     def __init__(self,
