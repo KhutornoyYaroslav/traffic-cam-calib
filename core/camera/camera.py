@@ -6,8 +6,8 @@ from core.camera.functional import eulers2rotmat
 class Camera:
     """
     Camera class allows you to project 3d world points onto the image plane.
-    It uses the OpenGL camera coordinate system, where the X axis is pointing to the right,
-    Y axis is pointing upwards and the Z axis is pointing backwards.
+    It uses the right-handed coordinate system.
+    See for more info: https://www.evl.uic.edu/ralph/508S98/coordinates.html.
     """
     def __init__(self,
                  aov_h: float,
@@ -15,9 +15,9 @@ class Camera:
                  pose_xyz: Tuple[float, float, float] = (0, 0, 0),
                  eulers_xyz: Tuple[float, float, float] = (0, 0, 0)):
         self.aov_h = aov_h
-        self.pose_xyz = pose_xyz
-        self.eulers_xyz = (eulers_xyz[0] + 180.0, eulers_xyz[1], eulers_xyz[2])
         self.img_size = img_size
+        self.pose_xyz =  np.array(pose_xyz)
+        self.eulers_xyz = np.array(eulers_xyz)
 
     def get_intrinsic_matrix(self):
         mat = np.zeros((3, 3), dtype=np.float32)
@@ -31,11 +31,10 @@ class Camera:
     
     def get_extrinsic_matrix(self):
         mat = np.zeros((3, 4), dtype=np.float32)
-        r = eulers2rotmat(np.radians(self.eulers_xyz), order='YXZ')
+        r = eulers2rotmat(self.eulers_xyz, degrees=True)
         rt = np.transpose(r)
-        t = np.array(self.pose_xyz)
         mat[:3, :3] = rt
-        mat[:3, 3] = np.matmul(-rt, t)
+        mat[:3, 3] = np.matmul(-rt, self.pose_xyz)
 
         return mat
 
@@ -52,7 +51,7 @@ class Camera:
             point2d = point2d[:2]
 
             if drop_out:
-                if not (0 < point2d[0] <= self.resolution[0]) or not (0 < point2d[1] <= self.resolution[1]):
+                if not (0 < point2d[0] <= self.img_size[0]) or not (0 < point2d[1] <= self.img_size[1]):
                     continue
 
             points2d.append(point2d)

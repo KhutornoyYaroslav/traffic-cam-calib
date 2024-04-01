@@ -2,7 +2,7 @@ import numpy as np
 from typing import Tuple
 
 
-def eulers2rotmat(eulers: Tuple[float, float, float], order: str = 'YXZ'):
+def eulers2rotmat(eulers: Tuple[float, float, float], order: str = 'YXZ', degrees: bool = False):
     """
     Creates rotation matrix from Euler anlges.
 
@@ -17,6 +17,9 @@ def eulers2rotmat(eulers: Tuple[float, float, float], order: str = 'YXZ'):
         rot : array
             Rotation matrix with shape (3, 3).
     """
+    if degrees:
+        eulers = np.radians(eulers)
+
     st = np.sin(eulers)
     ct = np.cos(eulers)
 
