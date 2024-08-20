@@ -5,6 +5,7 @@ from matplotlib.axes import Axes
 from core.camera.camera import Camera
 from core.camera.functional import eulers2rotmat
 from core.vehicle.vehicle_keypoints import nodes, edges
+from core.math.common import line_plane_intersection
 
 
 class Vehicle():
@@ -98,14 +99,58 @@ class Vehicle():
                 canvas.annotate(text, xy=vec, xytext=vec, alpha=0.5)
 
         # draw lines
+        near_clipping_plane_z = 0.001
+        camera_plane_norm = np.array([0.0, 0.0, 1.0])
+        camera_plane_pt = np.array([0.0, 0.0, near_clipping_plane_z])
+
         for idx1, idx2 in edges:
             label1, label2 = nodes[idx1], nodes[idx2]
             points3d = np.array([world_pts[label1], world_pts[label2]])
-            points2d = camera.project_points(points3d)
+            # points2d = camera.project_points(points3d)
+            # canvas.plot(points2d[:, 0], points2d[:, 1], color=color, lw=1, alpha=0.5)
+
+            # TODO: to camera.project_lines()
+
+            # to camera coordinate system
+            points3d_camera = []
+            for point3d in points3d:
+                res = np.matmul(camera.get_extrinsic_matrix(), np.append(point3d, 1.0))
+                points3d_camera.append(res)
+
+            if points3d_camera[0][-1] < near_clipping_plane_z and points3d_camera[1][-1] < near_clipping_plane_z:
+                continue
+
+            if points3d_camera[0][-1] < near_clipping_plane_z or points3d_camera[1][-1] < near_clipping_plane_z:
+                intersect_pt = line_plane_intersection(camera_plane_norm, camera_plane_pt, points3d_camera[0], points3d_camera[1])
+                if intersect_pt is None: # line is parallel to plane
+                    continue
+                if points3d_camera[0][-1] < points3d_camera[1][-1]:
+                    points3d_camera[0] = intersect_pt
+                else:
+                    points3d_camera[1] = intersect_pt
+
+            points2d = []
+            for point3d in points3d_camera:
+                point2d = np.matmul(camera.get_intrinsic_matrix(), point3d)
+                point2d /= point2d[2]
+                point2d = point2d[:2]
+                points2d.append(point2d)
+
+            points2d = np.stack(points2d, 0)
             canvas.plot(points2d[:, 0], points2d[:, 1], color=color, lw=1, alpha=0.5)
 
         # draw points
         points3d = np.array(list(world_pts.values()))
-        points2d = camera.project_points(points3d)
-        for point2d in points2d:
+        # points2d = camera.project_points(points3d)
+        # for point2d in points2d:
+        #     canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=2)
+        for point3d in points3d:
+            point3d_camsys = np.matmul(camera.get_extrinsic_matrix(), np.append(point3d, 1.0))
+            if point3d_camsys[-1] < near_clipping_plane_z:
+                continue
+
+            point2d = np.matmul(camera.get_intrinsic_matrix(), point3d_camsys)
+            point2d /= point2d[2]
+            point2d = point2d[:2]
+
             canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=2)

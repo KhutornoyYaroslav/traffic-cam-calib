@@ -1,0 +1,7 @@
+1. При отрисовке резать edges которые пересекаются near clipping plane. Отрисовывать просто обрезки, без добавления новых nodes.
+Nodes не рисовать те, которые за near clipping plane. Это просто отрисовка.
+При калибровке же, просто отсекать nodes, которые за near clipping plane.
+
+2. Model class
+Model.load(filename)
+Model.get_skeleton() -> Skeleton3d

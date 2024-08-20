@@ -55,7 +55,8 @@ def main():
     global camera, models, model_id, vehicle, ax, fig
 
     # camera
-    camera = Camera(aov_h=40, img_size=(800, 600), pose_xyz=(0, -4, -10), eulers_xyz=(-22, 0, 0))
+    # camera = Camera(aov_h=40, img_size=(800, 600), pose_xyz=(0, -4, -10), eulers_xyz=(-22, 0, 0))
+    camera = Camera(aov_h=40, img_size=(800, 600), pose_xyz=(0, 0, -10), eulers_xyz=(0, 0, 0))
 
     # models
     models = sorted(glob("data/models/*"))
@@ -65,7 +66,7 @@ def main():
     vehicle = Vehicle()
     vehicle.load(models[model_id])
     vehicle.set_pose(0, 0, 0)
-    vehicle.set_rotation(0, 135.0, 0)
+    # vehicle.set_rotation(0, 135.0, 0)
 
     # figure
     fig = plt.figure(figsize=(8, 8))

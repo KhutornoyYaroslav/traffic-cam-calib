@@ -46,6 +46,8 @@ class Camera:
 
         points2d = []
         for point3d in points3d:
+            # print(np.matmul(self.get_extrinsic_matrix(), np.append(point3d, 1.0)))
+
             point2d = np.matmul(proj, np.append(point3d, 1.0))
             point2d /= point2d[2]
             point2d = point2d[:2]
