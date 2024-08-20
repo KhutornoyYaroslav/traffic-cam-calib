@@ -1,33 +1,39 @@
 import numpy as np
 from glob import glob
 from sklearn.cluster import KMeans
-from core.vehicle.vehicle import Vehicle
+from core.objects.carskeleton import CarSkeleton
 
 
 def main():
     # load models
     model_paths = sorted(glob("data/models/*"))
-    vehicles = []
+    cars = []
     for path in model_paths:
-        vehicle = Vehicle(tag=path)
-        vehicle.load(path)
-        vehicles.append(vehicle)
+        car = CarSkeleton(tag=path)
+        car.load(path)
+        cars.append(car)
 
     # get vehicle points
-    vehicles_points = []
-    for vehicle in vehicles:
-        assert vehicle.points_count() == 32
-        pts = vehicle.get_obj_pts(centered=False)
+    cars_points = []
+    for car in cars:
+        assert car.points_count() == 32
+        pts = car.keypoints_xyz
+        c = car.get_centroid()
+
         sorted_keys = sorted(list(pts.keys()))
         sorted_pts = {key: pts[key] for key in sorted_keys}
-        vehicles_points.append(list(sorted_pts.values()))
-    vehicles_points = np.array(vehicles_points) # (N, 32, 3)
-    vehicles_norms = np.linalg.norm(vehicles_points, axis=-1) # (N, 32)
+
+        for key in sorted_pts.keys():
+            sorted_pts[key] -= c
+
+        cars_points.append(list(sorted_pts.values()))
+    cars_points = np.array(cars_points) # (N, 32, 3)
+    cars_norms = np.linalg.norm(cars_points, axis=-1) # (N, 32)
 
     # clusterize
-    n_clusters = 5
-    solver = KMeans(n_clusters=n_clusters, init='random', tol=1e-3, max_iter=300, verbose=0)
-    result = solver.fit(vehicles_norms)
+    n_clusters = 4
+    solver = KMeans(n_clusters=n_clusters, init='random', tol=1e-3, max_iter=300, verbose=1)
+    result = solver.fit(cars_norms)
 
     cluster_idxs = []
     for cluster_id in range(n_clusters):
