@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 from glob import glob
 from typing import List
 from matplotlib.axes import Axes
-from core.objects.carskeleton import CarSkeleton
+# from core.objects.carskeleton import CarSkeleton
 from core.camera.camera import Camera
-from core.objects.grid import Grid
+# from core.objects.grid import Grid
 
 
 def on_keyboard_press(event):
