@@ -6,7 +6,7 @@ def check_value(val: Union[list, tuple, np.ndarray]):
     if isinstance(val, (list, tuple)):
         val = np.array(val, np.float32)
     if val.size != 3:
-        raise ValueError("Value must be three dimensional")
+        raise ValueError("Value must have size=3")
 
     return val
 

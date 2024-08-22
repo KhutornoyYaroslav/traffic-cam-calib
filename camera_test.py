@@ -13,6 +13,10 @@ def on_keyboard_press(event):
 
     if event.key == 'right':
         camera.rotate(y=5.0)
+        # for d in drawables:
+        #     if isinstance(d, Vehicle):
+        #         d.rotate(y=5.0)
+
     if event.key == 'left':
         camera.rotate(y=-5.0)
     if event.key == 'up':
@@ -55,21 +59,33 @@ def main():
     global camera, ax, fig, drawables
 
     # camera
-    camera = Camera(aov_h=60, img_size=(800, 600), pose=(-5, -3, -10), eulers=(-10, 20, 0))
+    camera = Camera(aov_h=40, img_size=(1920, 1080), pose=(-5, -5, -10), eulers=(-15, 20, 0))
 
     drawables = []
 
     # plane grid
-    plane = PlaneGrid(x_range=(-5., 5.), z_range=(-5., 5.))
+    plane = PlaneGrid(x_range=(-3., 3.), z_range=(-100., 100.))
     drawables.append(plane)
 
     # world axes
     axes3d = Axes3d()
-    axes3d.translate(x=-4.0, z=-3.0)
+    axes3d.translate(x=5.0, y=-2.0, z=8.0)
     drawables.append(axes3d)
 
     # vehicle
-    vehicle = Vehicle("data/models/019-SUV.json")
+    vehicle = Vehicle("data/models/Ford_Mondeo.json")
+    vehicle.rotate(y=180.0)
+    vehicle.translate(z=2.0, x=0.0)
+    drawables.append(vehicle)
+
+    vehicle = Vehicle("data/models/Range_Rover.json")
+    vehicle.rotate(y=180.0)
+    vehicle.translate(z=12.0, x=1.0)
+    drawables.append(vehicle)
+
+    vehicle = Vehicle("data/models/Smart.json")
+    vehicle.rotate(y=180.0)
+    vehicle.translate(z=20.0, x=-1.0)
     drawables.append(vehicle)
 
     # figure

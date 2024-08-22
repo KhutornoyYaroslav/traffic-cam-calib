@@ -22,5 +22,5 @@ class Axes3d(Transformable, Drawable):
         for ax3d, col, text in zip(axes3d, ['r', 'g', 'b'], ['x', 'y', 'z']):
             res = camera.project_line(ax3d, self._pose)
             if res is not None:
-                canvas.arrow(*res[1], *(res[0] - res[1]), width=1, color=col, alpha=0.5)
+                canvas.arrow(*res[1], *(res[0] - res[1]), width=5, color=col, alpha=0.5)
                 canvas.annotate(text, xy=res[0], xytext=res[0], alpha=0.5)

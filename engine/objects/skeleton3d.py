@@ -1,25 +1,59 @@
 import numpy as np
-from typing import Union, Tuple
-from matplotlib.axes import Axes
-from engine.camera.camera import Camera
+from typing import Union, Dict
 from engine.math.eulers import eulers2rotmat
-from engine.common.transformable import Transformable
-from engine.objects.object3d import Object3d
+from engine.common.transformable import Transformable, check_value
 
 
-class Skeleton3d(Object3d):
-    """s
-    Skeleton3d represents an object in 3d space as a set of nodes and edges.
-
-    Parameters:
-        points : array
-            XYZ coordinates of skeleton nodes with shape (N, 3).
-    """
+class Skeleton3d(Transformable):
     def __init__(self,
-                 points: np.ndarray,
-                 edges: np.ndarray,
-                 pose: Union[list, tuple, np.ndarray] = [0., 0., 0.],
-                 eulers: Union[list, tuple, np.ndarray] = [0., 0., 0.],
-                 scale: float = 1.):
-        super().__init__(points, pose, eulers, scale)
+                 nodes: Dict[str,  Union[list, tuple, np.ndarray]],
+                 edges: list,
+                 *args,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+        self._nodes = dict([(k, check_value(v)) for k, v in nodes.items()])
         self._edges = edges
+
+    @property
+    def nodes(self) -> Dict[str,  np.ndarray]:
+        return self._nodes
+
+    @nodes.setter
+    def nodes(self, val: Dict[str,  Union[list, tuple, np.ndarray]]):
+        self._nodes = dict([(k, check_value(v)) for k, v in val.items()])
+
+    @property
+    def edges(self) -> list:
+        return self._edges
+
+    @edges.setter
+    def edges(self, val: list):
+        self._edges = val
+
+    def size(self) -> int:
+        return len(self._nodes)
+
+    def node(self, label: str) -> np.ndarray:
+        return self._nodes[label]
+
+    def world_node(self, label: str) -> np.ndarray:
+        return self.world_nodes()[label]
+    
+    def centroid(self) -> np.ndarray:
+       return np.mean(list(self._nodes.values()), axis=0)
+
+    def world_centroid(self) -> np.ndarray:
+       return np.mean(list(self.world_nodes().values()), axis=0)
+
+    def world_nodes(self) -> Dict[str, np.ndarray]:
+        result = {}
+
+        c = self.centroid()
+        rot_mat = eulers2rotmat(self._eulers, degrees=True)
+        for k, v in self._nodes.items():
+            rotated = np.matmul(rot_mat, v - c) + c
+            scaled = self._scale * rotated
+            tranlstaed = scaled + self._pose
+            result[k] = tranlstaed
+
+        return result

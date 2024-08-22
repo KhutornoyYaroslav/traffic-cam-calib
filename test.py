@@ -1,9 +1,13 @@
 import numpy as np
-from engine.common.transformable import Transformable
+from simulation.routing.route import Route
 
-tr = Transformable()
-tr.pose = (0.0, 1.0, 10.0)
-print(tr.pose)
-tr.translate(y=-1.0)
-print(tr.pose)
 
+waypoints = [
+    [0.0, 0.0, 0.0],
+    [0.0, 1.0, 1.0],
+    [0.0, 2.0, 2.0]
+]
+route = Route(waypoints)
+
+wp = route.interpolate(2.8)
+print(wp)
