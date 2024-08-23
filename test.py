@@ -1,13 +1,8 @@
 import numpy as np
-from simulation.routing.route import Route
+from simulation.scene.scene import Scene
+from simulation.scene.reader import SceneReader
 
 
-waypoints = [
-    [0.0, 0.0, 0.0],
-    [0.0, 1.0, 1.0],
-    [0.0, 2.0, 2.0]
-]
-route = Route(waypoints)
-
-wp = route.interpolate(2.8)
-print(wp)
+scene = Scene()
+scene_reader = SceneReader(scene)
+scene_reader.read("config/scene/scene_1.json")

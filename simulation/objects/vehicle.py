@@ -86,15 +86,12 @@ EDGES = [
 
 
 class Vehicle(Skeleton3d, Drawable):
-    def __init__(self, json_path: str, *args, **kwargs):
-        nodes = self.load_from_file(json_path, LABELS)
-        super().__init__(nodes, EDGES, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__({}, EDGES, *args, **kwargs)
         # super(Drawable, self).__init__()
-        self._color = (1.0, 0.5, 0.5)
 
-    @staticmethod
-    def load_from_file(path: str, labels_filter: Union[List[str], None] = None):
-        result = {}
+    def load_from_file(self, path: str, labels_filter: Union[List[str], None] = None):
+        nodes = {}
         with open(path, 'r') as f:
             data = json.load(f)
             file_labels = data.get('pts', {})
@@ -103,28 +100,30 @@ class Vehicle(Skeleton3d, Drawable):
                 if (labels_filter is not None) and (file_label not in labels_filter):
                     continue
                 if file_vertex_idx >= 0 and file_vertex_idx < len(file_vertices):
-                    result[file_label] = file_vertices[file_vertex_idx]
-
-        return result
+                    nodes[file_label] = file_vertices[file_vertex_idx]
+        self.nodes = nodes
 
     def draw(self, canvas: Axes, camera: Camera):
+        # color
+        color = (1.0, 0.5, 0.5)
+
         # draw edges
         for idx1, idx2 in self._edges:
             res = camera.project_line(self.world_node(LABELS[idx1]), self.world_node(LABELS[idx2]))
             if res is not None:
                 res = np.stack(res, 0)
-                canvas.plot(res[:, 0], res[:, 1], color=self._color, lw=1, alpha=0.5)
+                canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
 
         # # draw nodes
         # pts = list(self.world_nodes().values())
         # points2d = camera.project_points(pts)
         # if points2d is not None:
         #     for point2d in points2d:
-        #         canvas.plot(point2d[0], point2d[1], 'o', color=self._color, markersize=1)
+        #         canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=1)
 
         # draw centroid
         pts = np.expand_dims(self.world_centroid(), 0)
         points2d = camera.project_points(pts)
         if points2d is not None:
             for point2d in points2d:
-                canvas.plot(point2d[0], point2d[1], '+', color=self._color, markersize=5)
+                canvas.plot(point2d[0], point2d[1], '+', color=color, markersize=5)

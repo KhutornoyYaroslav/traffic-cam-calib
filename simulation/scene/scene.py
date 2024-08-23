@@ -1,64 +1,92 @@
+import numpy as np
+from glob import glob
+from typing import List
 from simulation.routing.route import Route
 from simulation.objects.vehicle import Vehicle
 from simulation.objects.planegrid import PlaneGrid
 from simulation.drawing.drawable import Drawable, Camera, Axes
 
 
-ROUTE_1_WAYPOINTS = [
-    [-1, 0, 60],
-    [-3, 0, 25],   
-    [-3, 0, 5],
-    [-1, 0, -10],
-]
-
-ROUTE_2_WAYPOINTS = [
-    [2, 0, -10],
-    [2, 0, 25],
-    [2, 0, 60]
-]
-
-ROUTE_3_WAYPOINTS = [
-    [2, 0, -30],
-    [2, 0, 70]
-]
-
-
-DEFAULT_SPEED = 30.0 # mps
-
-
 class Scene(Drawable):
     def __init__(self):
         super().__init__() # Drawable
-        self._plane_grid = PlaneGrid((-4.0, 4.0), (-100.0, 100.0), 1.0)
-        self._vehicles = [
-            Vehicle("data/models/Ford_Mondeo.json"),
-            Vehicle("data/models/Smart.json"),
-            # Vehicle("data/models/Range_Rover.json")
-        ]
-        self._routes = [
-            Route(ROUTE_1_WAYPOINTS),
-            Route(ROUTE_2_WAYPOINTS),
-            # Route(ROUTE_3_WAYPOINTS)
-        ]
-        self._vehicle_route_map = {0: 0, 1: 1, 2: 2}
+        self._plane_grid = None
+        self._vehicles = []
+        self._routes = []
+        self.vehicle_route_map = {}
+        self.vehicles_to_randomize = []
+        self.loop_routes = False
+        self.models_dir = ""
+        self._last_timestamp = 0.0
+
+    @property
+    def plane_grid(self) -> PlaneGrid:
+        return self._plane_grid
+
+    @plane_grid.setter
+    def plane_grid(self, val: PlaneGrid):
+        self._plane_grid = val
+
+    @property
+    def routes(self) -> List[Route]:
+        return self._routes
+
+    @routes.setter
+    def routes(self, val: List[Route]):
+        self._routes = val
+
+    def add_route(self, route: Route) -> int:
+        self._routes.append(route)
+
+        return len(self._routes) - 1
+
+    @property
+    def vehicles(self) -> List[Vehicle]:
+        return self._vehicles
+
+    @vehicles.setter
+    def vehicles(self, val: List[Vehicle]):
+        self._vehicles = val
+
+    def add_vehicle(self, vehicle: Vehicle) -> int:
+        self._vehicles.append(vehicle)
+
+        return len(self._vehicles) - 1
+
+    def get_random_model_file(self):
+        model_files = sorted(glob(self.models_dir + "/*.json"))
+        idx = np.random.randint(0, len(model_files))
+
+        return model_files[idx]
 
     def update_world(self, timestamp: float):
         # update vehicles positions
-        for v, r in self._vehicle_route_map.items():
+        for v, r in self.vehicle_route_map.items():
+            if v is None or r is None:
+                continue
             if v < 0 or v >= len(self._vehicles):
                 continue
             if r < 0 or r >= len(self._routes):
                 continue
             route = self._routes[r]
             vehicle = self._vehicles[v]
-            current_station = timestamp * DEFAULT_SPEED
-            current_station %= route.length()
-            vehicle.pose = route.interpolate_pose(current_station)
-            vehicle.eulers = route.interpolate_eulers(current_station)
+
+            timestamp_ = timestamp
+            if self.loop_routes and route.duration() > 0.0:
+                timestamp_ = timestamp % route.duration()
+                if v in self.vehicles_to_randomize:
+                    if timestamp_ < (timestamp - self._last_timestamp):
+                        vehicle.load_from_file(self.get_random_model_file())
+
+            vehicle.pose = route.interpolate_pose(timestamp_)
+            vehicle.eulers = route.interpolate_eulers(timestamp_)
+
+        self._last_timestamp = timestamp
 
     def draw(self, canvas: Axes, camera: Camera):
         # draw plane grid
-        self._plane_grid.draw(canvas, camera)
+        if self._plane_grid is not None:
+            self._plane_grid.draw(canvas, camera)
 
         # draw routes
         for route in self._routes:

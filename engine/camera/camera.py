@@ -19,7 +19,7 @@ class Camera(Transformable):
         super().__init__(pose, eulers)
         self.aov_h = aov_h
         self.img_size = img_size
-        self.z_clipping_far = 100.0
+        self.z_clipping_far = 1000.0
         self.z_clipping_near = 0.001
 
     def set_aovh(self, aov_h: float):
