@@ -43,3 +43,14 @@ def eulers2rotmat(eulers: Tuple[float, float, float], order: str = 'YXZ', degree
         raise ValueError(f"Wrong order parameter: '{order}'.")
 
     return r
+
+
+def heading_to_eulers(heading: np.ndarray, degrees: bool = False) -> np.ndarray:
+    result = np.zeros(3, np.float32)
+    heading = heading / np.linalg.norm(heading)
+    result[0] = -np.arcsin(heading[1])
+    result[1] = np.arctan2(heading[0], heading[2])
+    if degrees:
+        result = np.degrees(result)
+
+    return result

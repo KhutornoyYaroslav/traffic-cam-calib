@@ -17,7 +17,7 @@ def draw_scene(fig, ax: Axes, camera: Camera, scene: Scene):
 
 def main():
     # camera
-    camera = Camera(aov_h=40, img_size=(1920, 1080), pose=(-5, -5, -10), eulers=(-15, 20, 0))
+    camera = Camera(aov_h=50, img_size=(1920, 1080), pose=(-5, -5, -10), eulers=(-15, 20, 0))
 
     # scene
     scene = Scene()
