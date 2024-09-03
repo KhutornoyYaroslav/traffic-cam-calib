@@ -34,3 +34,21 @@ def line_plane_intersection(plane_norm: np.ndarray,
     result = line_pt1 + t * line_vec
 
     return result
+
+
+def plane_normal(plane_pts: np.ndarray) -> np.ndarray:
+    # TODO: add description
+    if len(plane_pts) < 3:
+        raise ValueError("plane_pts must have at least three points")
+
+    vec1 = plane_pts[0] - plane_pts[1]
+    vec2 = plane_pts[0] - plane_pts[2]
+    normal_vec = np.cross(vec1, vec2)
+    normal_norm = np.linalg.norm(normal_vec)
+
+    return normal_vec / normal_norm
+
+
+def vectors_angle(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    # TODO: add description
+    return np.arccos(np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2)))
