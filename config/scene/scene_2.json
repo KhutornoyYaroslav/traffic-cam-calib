@@ -1,0 +1,39 @@
+{
+    "models_dir": "data/models/",
+    "loop_routes": true,
+    "plane_grid": {
+        "x_min": -4.0,
+        "x_max": 4.0,
+        "z_min": -10.0,
+        "z_max": 100.0,
+        "step": 1.0
+    },
+    "routes": [
+        {
+            "waypoints": [
+                [-2, 0, 60],
+                [-2, 0, -10]
+            ],
+            "dts": [2.0]
+        },
+        {
+            "waypoints": [
+                [2, 0, -10],
+                [2, 0, 60]
+            ],
+            "dts": [3.0]
+        }
+    ],
+    "vehicles": [
+        {
+            "model_path": "data/models/Ford_Mondeo.json",
+            "route_id": 0,
+            "randomize_model": true
+        },
+        {
+            "model_path": "data/models/Smart.json",
+            "route_id": 1,
+            "randomize_model": true
+        }
+    ]
+}
