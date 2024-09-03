@@ -3,6 +3,7 @@ import numpy as np
 from typing import List, Union
 from engine.objects.skeleton3d import Skeleton3d
 from simulation.drawing.drawable import Drawable, Axes, Camera
+from engine.math.geometry import plane_normal, vectors_angle
 
 
 LABELS = [
@@ -48,12 +49,8 @@ EDGES = [
     [14, 15],
     [26, 18], [26, 19], [18, 19],
     [27, 20], [27, 21], [20, 21],
-    [18, 20],
-    [19, 21],
-    # Windshield and rearview mirrors
+    # Windshield
     [4, 5], [5, 6], [6, 7], [7, 4],
-    [12, 4], [12, 7],
-    [13, 5], [13, 6],
     # Face <-> Windshield
     [19, 7], [21, 6],
     # Back
@@ -62,8 +59,6 @@ EDGES = [
     [16, 17],
     [28, 22], [28, 23], [22, 23],
     [29, 24], [29, 25], [24, 25],
-    [22, 24],
-    [23, 25],
     # Rear window
     [8, 9], [9, 10], [10, 11], [11, 8],
     # Back <-> Rear window
@@ -72,17 +67,94 @@ EDGES = [
     [4, 9], [5, 8],
     # Wheels
     [0, 1], [2, 3],
-    # Front wheels <-> Face and rearview mirrors
-    [0, 27], [0, 21], [0, 13],
-    [2, 26], [2, 19], [2, 12],
-    # Back wheels <-> Back and rearview mirrors
-    [1, 13], [1, 31], [1, 28],
-    [3, 12], [3, 30], [3, 29],
-    # Side window <-> Rear window
-    [30, 10], [31, 11],
-    # Side window <-> Rearview mirrors
-    [30, 12], [31, 13]
+    # Front wheels <-> Face
+    [0, 27], [0, 21],
+    [2, 26], [2, 19],
+    # Back wheels <-> Back
+    [1, 28], [1, 23],
+    [3, 29], [3, 25],
+    # Left side windows
+    [6, 31], [31, 11],
+    # Right side windows
+    [7, 30], [30, 10],
+    # Left rearview mirror
+    [6, 13], [5, 13],
+    # Right rearview mirror
+    [7, 12], [4, 12],
 ]
+
+
+"""
+Visibility faces are used to determine visibility of
+certain node of skeleton with respect to camera position.
+The order of points in faces is important due to plane
+normal vector calculation, so the normal vector must be
+outside from vehicle. It is also important to remember
+about those faces that can change the order of points
+depending on vehicle model. Don't use such faces.
+"""
+VISIBILITY_FACES = [
+    [7, 6, 5, 4], # 0 [windshield corners]
+    [11, 10, 9, 8], # 1 [rear window corners]
+    [0, 1, 31], # 2 [left side plane 1]
+    [0, 1, 6], # 3 [left side plane 2]
+    [0, 1, 13], # 4 [left side plane 3]
+    [13, 1, 31], # 5 [left side plane 4]
+    [3, 2, 30], # 6 [right side plane 1]
+    [3, 2, 7], # 7 [right side plane 2]
+    [3, 2, 12], # 8 [right side plane 3]
+    [30, 3, 12], # 9 [right side plane 4]
+    [5, 6, 13], # 10 [left rear view from front]
+    [12, 7, 4], # 11 [right rear view from front]
+    [20, 15, 27], # 12 [front left lp-inlight-bumper]
+    [27, 21, 20], # 13 [front left outlight-inlight-bumper]
+    [26, 14, 18], # 14 [front right lp-inlight-bumper]
+    [18, 19, 26], # 15 [front right outlight-inlight-bumper]
+    [16, 22, 28], # 16 [back left lp-inlight-bumper]
+    [28, 22, 23], # 17 [back left outlight-inlight-bumper]
+    [29, 24, 17], # 18 [back right lp-inlight-bumper]
+    [25, 24, 29], # 19 [back right outlight-inlight-bumper]
+]
+
+
+"""
+The mapping between certain skeleton node
+and face(s) to analyze its visibility.
+"""
+VISIBILITY_POINT_FACE_MAP = {
+    0: [2, 3], # fl wheel
+    1: [2, 3], # bl wheel
+    2: [6, 7], # fr wheel
+    3: [6, 7], # br wheel
+    4: [0], # windshield tr
+    5: [0], # windshield tl
+    6: [0], # windshield bl
+    7: [0], # windshield br
+    8: [1], # rear window tl
+    9: [1], # rear window tr
+    10: [1], # rear window br
+    11: [1], # rear window bl
+    12: [8, 9, 11], # rearview mirror r
+    13: [4, 5, 10], # rearview mirror l
+    14: [14], # bottom of license fl
+    15: [12], # bottom of license fl
+    16: [16], # bottom of license bl
+    17: [18], # bottom of license br
+    18: [14, 15], # headlight fr inner bottom
+    19: [15], # headlight fr outer top
+    20: [12, 13], # headlight fl inner bottom
+    21: [13], # headlight fl outer top
+    22: [16, 17], # headlight bl inner bottom
+    23: [17], # headlight bl outer top
+    24: [18, 19], # headlight br inner bottom
+    25: [19], # headlight br outer top
+    26: [14, 15], # bottom bumper fr
+    27: [12, 13], # bottom bumper fl
+    28: [16, 17], # bottom bumper bl
+    29: [18, 19], # bottom bumper br
+    30: [6], # side window back r
+    31: [2], # side window back l
+}
 
 
 class Vehicle(Skeleton3d, Drawable):
@@ -103,6 +175,41 @@ class Vehicle(Skeleton3d, Drawable):
                     nodes[file_label] = file_vertices[file_vertex_idx]
         self.nodes = nodes
 
+    def get_visible_node_labels(self, camera: Camera, max_angle: float = 82.5) -> List[str]:
+        result = []
+
+        # find visible by faces normals
+        for label, world_pt in self.world_nodes().items():
+            label_idx = LABELS.index(label)
+            if label_idx not in VISIBILITY_POINT_FACE_MAP:
+                continue
+            
+            best_angle = 3.14
+            for face_idx in VISIBILITY_POINT_FACE_MAP[label_idx]:
+                face = VISIBILITY_FACES[face_idx]
+
+                # calc face normal
+                face_pts = []
+                for pt_idx in face:
+                    face_pts.append(self.world_node(LABELS[pt_idx]))
+                face_pts = np.stack(face_pts, 0)
+                face_normal = plane_normal(face_pts)
+
+                # calc angle
+                pt1 = world_pt
+                pt2 = world_pt + face_normal
+                normal_vec = pt2 - pt1
+                camera_vec = camera.pose - pt1
+                angle_to_cam = vectors_angle(camera_vec, normal_vec)
+
+                if angle_to_cam < best_angle:
+                    best_angle = angle_to_cam
+
+            if best_angle < np.deg2rad(max_angle):
+                result.append(label)
+
+        return result
+
     def draw(self, canvas: Axes, camera: Camera):
         # color
         color = (1.0, 0.5, 0.5)
@@ -114,16 +221,22 @@ class Vehicle(Skeleton3d, Drawable):
                 res = np.stack(res, 0)
                 canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
 
-        # # draw nodes
-        # pts = list(self.world_nodes().values())
-        # points2d = camera.project_points(pts)
-        # if points2d is not None:
-        #     for point2d in points2d:
-        #         canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=1)
-
         # draw centroid
         pts = np.expand_dims(self.world_centroid(), 0)
         points2d = camera.project_points(pts)
         if points2d is not None:
             for point2d in points2d:
                 canvas.plot(point2d[0], point2d[1], '+', color=color, markersize=5)
+
+        # draw visible nodes
+        visible_labels = self.get_visible_node_labels(camera)
+        if len(visible_labels):
+            visible_points = []
+            for label in visible_labels:
+                visible_points.append(self.world_node(label))
+            visible_points = np.stack(visible_points, 0)
+
+            points2d = camera.project_points(visible_points)
+            if points2d is not None:
+                for point2d in points2d:
+                    canvas.plot(point2d[0], point2d[1], 'o', color=(0.7, 0, 0), markersize=2)
