@@ -88,24 +88,8 @@ class Route(Drawable):
 
         return last_eulers
 
-    # def interpolate_eulers(self, s: float) -> np.ndarray:
-    #     assert s >= 0, "Station distance must be positive"
-
-    #     last_eulers = np.zeros(3, np.float32)
-    #     vec_length_sum = 0.0
-    #     for wp_idx in range(0, len(self._waypoints) - 1):
-    #         vec = self._waypoints[wp_idx + 1] - self._waypoints[wp_idx]
-    #         vec_length = np.linalg.norm(vec)
-    #         vec_norm = vec / vec_length
-    #         last_eulers = heading_to_eulers(vec_norm, True)
-    #         if s < vec_length_sum + vec_length:
-    #             return last_eulers
-    #         vec_length_sum += vec_length
-
-    #     return last_eulers
-
-    def is_end(self, s: float, eps: float = 0.001):
-        if np.linalg.norm(self.interpolate_pose(s) - self._waypoints[-1]) < eps:
+    def is_end(self, timestamp: float, eps: float = 0.001):
+        if np.linalg.norm(self.interpolate_pose(timestamp) - self._waypoints[-1]) < eps:
             return True
 
         return False

@@ -6,6 +6,42 @@ from simulation.drawing.drawable import Drawable, Axes, Camera
 from engine.math.geometry import plane_normal, vectors_angle
 
 
+# LABELS_NEW = [
+#     "wheel_front_left", # 0
+#     "wheel_back_left", # 1
+#     "wheel_front_right", # 2
+#     "wheel_back_right", # 3
+#     "windshield_top_right", # 4
+#     "windshield top_left", # 5
+#     "windshield bottom_left", # 6
+#     "windshield bottom_right", # 7
+#     "rear_window_top_left", # 8
+#     "rear_window_top_right", # 9
+#     "rear_window_bottom_right", # 10
+#     "rear_window_bottom_left", # 11
+#     "rearview_mirror_right", # 12
+#     "rearview_mirror_left", # 13
+#     "license_front_right", # 14
+#     "license_front_left", # 15
+#     "license_back_left", # 16
+#     "license_back_right", # 17
+#     "lights_inner_front_right", # 18
+#     "lights_outer_front_right", # 19
+#     "lights_inner_front_left", # 20
+#     "lights_outer_front_left", # 21
+#     "lights_inner_back_left", # 22
+#     "lights_outer_back_left", # 23
+#     "lights_inner_back_right", # 24
+#     "lights_outer_back_right", # 25
+#     "bumper_front_right", # 26
+#     "bumper_front_left", # 27
+#     "bumper_back_left", # 28
+#     "bumper_back_right", # 29
+#     "side_window_back_right", # 30
+#     "side_window_back_left", # 31
+# ]
+
+
 LABELS = [
     "fl wheel", # 0
     "bl wheel", # 1
@@ -110,10 +146,10 @@ VISIBILITY_FACES = [
     [27, 21, 20], # 13 [front left outlight-inlight-bumper]
     [26, 14, 18], # 14 [front right lp-inlight-bumper]
     [18, 19, 26], # 15 [front right outlight-inlight-bumper]
-    [16, 22, 28], # 16 [back left lp-inlight-bumper]
-    [28, 22, 23], # 17 [back left outlight-inlight-bumper]
-    [29, 24, 17], # 18 [back right lp-inlight-bumper]
-    [25, 24, 29], # 19 [back right outlight-inlight-bumper]
+    [28, 22, 23], # 16 [back left outlight-inlight-bumper]
+    [25, 24, 29], # 17 [back right outlight-inlight-bumper]
+    [28, 29, 24, 22], # 18 [back left-right bumper-inligts]
+    [26, 27, 20, 18], # 19 [front left-right bumper-inligts]
 ]
 
 
@@ -136,22 +172,22 @@ VISIBILITY_POINT_FACE_MAP = {
     11: [1], # rear window bl
     12: [8, 9, 11], # rearview mirror r
     13: [4, 5, 10], # rearview mirror l
-    14: [14], # bottom of license fl
-    15: [12], # bottom of license fl
-    16: [16], # bottom of license bl
+    14: [19], # bottom of license fr
+    15: [19], # bottom of license fl
+    16: [18], # bottom of license bl
     17: [18], # bottom of license br
-    18: [14, 15], # headlight fr inner bottom
-    19: [15], # headlight fr outer top
-    20: [12, 13], # headlight fl inner bottom
-    21: [13], # headlight fl outer top
-    22: [16, 17], # headlight bl inner bottom
-    23: [17], # headlight bl outer top
-    24: [18, 19], # headlight br inner bottom
-    25: [19], # headlight br outer top
-    26: [14, 15], # bottom bumper fr
-    27: [12, 13], # bottom bumper fl
-    28: [16, 17], # bottom bumper bl
-    29: [18, 19], # bottom bumper br
+    18: [14], # headlight fr inner bottom
+    19: [14, 15], # headlight fr outer top
+    20: [12], # headlight fl inner bottom
+    21: [12, 13], # headlight fl outer top
+    22: [18], # headlight bl inner bottom
+    23: [16], # headlight bl outer top
+    24: [18], # headlight br inner bottom
+    25: [17], # headlight br outer top
+    26: [15], # bottom bumper fr
+    27: [13], # bottom bumper fl
+    28: [16], # bottom bumper bl
+    29: [17], # bottom bumper br
     30: [6], # side window back r
     31: [2], # side window back l
 }
@@ -221,15 +257,23 @@ class Vehicle(Skeleton3d, Drawable):
                 res = np.stack(res, 0)
                 canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
 
-        # draw centroid
-        pts = np.expand_dims(self.world_centroid(), 0)
-        points2d = camera.project_points(pts)
-        if points2d is not None:
-            for point2d in points2d:
-                canvas.plot(point2d[0], point2d[1], '+', color=color, markersize=5)
+        # # draw centroid
+        # pts = np.expand_dims(self.world_centroid(), 0)
+        # points2d = camera.project_points(pts)
+        # if points2d is not None:
+        #     for point2d in points2d:
+        #         canvas.plot(point2d[0], point2d[1], '+', color=color, markersize=5)
+
+        # # draw nodes
+        # for idx, (label, point3d) in enumerate(self.world_nodes().items()):
+        #     point2d = camera.project_points([point3d])
+        #     if point2d is not None:
+        #         point2d = point2d[0]
+        #         canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=1)
+        #         canvas.annotate(f"{idx:d}", xy=point2d, xytext=point2d, alpha=0.5)
 
         # draw visible nodes
-        visible_labels = self.get_visible_node_labels(camera)
+        visible_labels = self.get_visible_node_labels(camera, max_angle=80.0)
         if len(visible_labels):
             visible_points = []
             for label in visible_labels:
