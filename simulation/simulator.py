@@ -1,4 +1,6 @@
+import numpy as np
 import matplotlib.pyplot as plt
+from copy import deepcopy
 from typing import List
 from matplotlib.axes import Axes
 from engine.camera.camera import Camera
@@ -15,6 +17,8 @@ class Simulator():
         self._t_curr = self._t_start
         self._interrupted = False
         self._draw_scene = False
+        self._draw_routes = True
+        self._draw_plane_grid = True
 
     @property
     def scene(self) -> Scene:
@@ -31,6 +35,22 @@ class Simulator():
     @draw_scene.setter
     def draw_scene(self, val: bool):
         self._draw_scene = val
+
+    @property
+    def draw_routes(self) -> bool:
+        return self._draw_routes
+
+    @draw_routes.setter
+    def draw_routes(self, val: bool):
+        self._draw_routes = val
+
+    @property
+    def draw_plane_grid(self) -> bool:
+        return self._draw_plane_grid
+
+    @draw_plane_grid.setter
+    def draw_plane_grid(self, val: bool):
+        self._draw_plane_grid = val
 
     @property
     def cameras(self) -> List[Camera]:
@@ -83,20 +103,40 @@ class Simulator():
         canvas.invert_yaxis()
         canvas.set_aspect('equal')
         canvas.axis('off')
-        self._scene.draw(canvas, camera)
+
+        # TODO: errors logic should not be in drawing
+        camera_noisy = deepcopy(camera)
+        camera_noisy.pose += np.random.normal(0.0, 0.03, 3)
+        camera_noisy.eulers += np.random.normal(0.0, 0.01, 3)
+
+        if self._draw_plane_grid:
+            if self._scene.plane_grid is not None:
+                self._scene.plane_grid.draw(canvas, camera_noisy)
+        if self._draw_routes:
+            for route in self._scene.routes:
+                route.draw(canvas, camera_noisy)
+        for vehicle in self._scene.vehicles:
+            vehicle.draw(canvas, camera_noisy)
+
         figure.canvas.draw_idle()
 
     def interrupt(self):
         self._interrupted = True
 
-    def tick(self, reverse_time: bool = False) -> bool:
+    def is_finished(self) -> bool:
+        return self._t_curr >= self._t_stop
+
+    def tick(self, reverse_time: bool = False):
         if self._t_curr < self._t_stop:
+            # update ideal world
             self._scene.update_world(self._t_curr)
             print(f"Simulation updated at {self._t_curr:.2f}s")
-            self._t_curr += (-1 if reverse_time else 1) * self._t_step
-            return True
 
-        return False
+            # add errors
+            # TODO:
+
+            # update current timestamp
+            self._t_curr += (-1 if reverse_time else 1) * self._t_step
 
     def run(self, autoplay: bool = True):
         # drawing
@@ -109,7 +149,7 @@ class Simulator():
                 canvases.append(figure.add_subplot(plt_rows, 1, subplt_idx + 1))
 
         # main loop
-        while not self._interrupted:
+        while not self._interrupted and not self.is_finished():
             self.tick()
             if self._draw_scene:
                 for idx, canvas in enumerate(canvases):

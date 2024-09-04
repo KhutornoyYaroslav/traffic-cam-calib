@@ -42,6 +42,8 @@ class Configurator():
 
     def parse_drawings(self, data: dict):
         self._simulator.draw_scene = data.get("draw_scene", False)
+        self._simulator.draw_routes = data.get("draw_routes", True)
+        self._simulator.draw_plane_grid = data.get("draw_plane_grid", True)
 
     def configurate(self, filepath: str):
         with open(filepath, 'r') as f:

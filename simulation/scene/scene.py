@@ -4,12 +4,11 @@ from typing import List
 from simulation.routing.route import Route
 from simulation.objects.vehicle import Vehicle
 from simulation.objects.planegrid import PlaneGrid
-from simulation.drawing.drawable import Drawable, Camera, Axes
 
 
-class Scene(Drawable):
+class Scene():
     def __init__(self):
-        super().__init__() # Drawable
+        # TODO: setter, getters ?
         self._plane_grid = None
         self._vehicles = []
         self._routes = []
@@ -82,16 +81,3 @@ class Scene(Drawable):
             vehicle.eulers = route.interpolate_eulers(timestamp_)
 
         self._last_timestamp = timestamp
-
-    def draw(self, canvas: Axes, camera: Camera):
-        # draw plane grid
-        if self._plane_grid is not None:
-            self._plane_grid.draw(canvas, camera)
-
-        # draw routes
-        for route in self._routes:
-            route.draw(canvas, camera)
-
-        # draw vehicles
-        for vehicle in self._vehicles:
-            vehicle.draw(canvas, camera)

@@ -250,12 +250,12 @@ class Vehicle(Skeleton3d, Drawable):
         # color
         color = (1.0, 0.5, 0.5)
 
-        # draw edges
-        for idx1, idx2 in self._edges:
-            res = camera.project_line(self.world_node(LABELS[idx1]), self.world_node(LABELS[idx2]))
-            if res is not None:
-                res = np.stack(res, 0)
-                canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
+        # # draw edges
+        # for idx1, idx2 in self._edges:
+        #     res = camera.project_line(self.world_node(LABELS[idx1]), self.world_node(LABELS[idx2]))
+        #     if res is not None:
+        #         res = np.stack(res, 0)
+        #         canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
 
         # # draw centroid
         # pts = np.expand_dims(self.world_centroid(), 0)

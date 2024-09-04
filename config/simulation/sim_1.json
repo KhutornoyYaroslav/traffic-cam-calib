@@ -1,5 +1,7 @@
 {
     "draw_scene": true,
+    "draw_plane_grid": true,
+    "draw_routes": false,
     "scene_config_path": "config/scene/scene_2.json",
     "cameras": [
         {
@@ -9,31 +11,46 @@
             "pose": {
                 "x": -5.0,
                 "y": -5.0,
-                "z": -10.0
+                "z": -15.0
             },
             "eulers": {
                 "x": -15.0,
                 "y": 20.0,
                 "z": 0.0      
             }
-        },
-        {
-            "aov_h": 90.0,
-            "img_w": 1920,
-            "img_h": 1080,
-            "pose": {
-                "x": 0.0,
-                "y": -1.0,
-                "z": -10.0
-            },
-            "eulers": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0      
-            }
         }
     ],
     "t_start": 0.0,
-    "t_stop": 100.0,
-    "t_step": 0.1
+    "t_stop": 10.0,
+    "t_step": 0.05,
+    "errors_modelling": {
+        "vehicle": {
+            "points": {
+                "x_mean": 0.0,
+                "x_std": 0.0,
+                "y_mean": 0.0,
+                "y_std": 0.0,
+                "z_mean": 0.0,
+                "z_std": 0.0
+            }
+        },
+        "camera": {
+            "pose": {
+                "x_mean": 0.0,
+                "x_std": 0.0,
+                "y_mean": 0.0,
+                "y_std": 0.0,
+                "z_mean": 0.0,
+                "z_std": 0.0
+            },
+            "eulers": {
+                "x_mean": 0.0,
+                "x_std": 0.0,
+                "y_mean": 0.0,
+                "y_std": 0.0,
+                "z_mean": 0.0,
+                "z_std": 0.0
+            }
+        }
+    }
 }
