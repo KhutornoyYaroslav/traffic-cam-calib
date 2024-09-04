@@ -25,17 +25,7 @@
     "t_step": 0.05,
     "errors_modelling": {
         "vehicle": {
-            "points": {
-                "x_mean": 0.0,
-                "x_std": 0.0,
-                "y_mean": 0.0,
-                "y_std": 0.0,
-                "z_mean": 0.0,
-                "z_std": 0.0
-            }
-        },
-        "camera": {
-            "pose": {
+            "points_error": {
                 "x_mean": 0.0,
                 "x_std": 0.0,
                 "y_mean": 0.0,
@@ -43,7 +33,18 @@
                 "z_mean": 0.0,
                 "z_std": 0.0
             },
-            "eulers": {
+            "points_miss_rate": 0.5
+        },
+        "camera": {
+            "pose_error": {
+                "x_mean": 0.0,
+                "x_std": 0.0,
+                "y_mean": 0.0,
+                "y_std": 0.0,
+                "z_mean": 0.0,
+                "z_std": 0.0
+            },
+            "eulers_error": {
                 "x_mean": 0.0,
                 "x_std": 0.0,
                 "y_mean": 0.0,

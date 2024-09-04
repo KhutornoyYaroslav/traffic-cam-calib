@@ -132,8 +132,10 @@ class Simulator():
             self._scene.update_world(self._t_curr)
             print(f"Simulation updated at {self._t_curr:.2f}s")
 
-            # add errors
+            # add world noise
             # TODO:
+            # self._noisy_vehicles ?
+            # self._noisy_cameras ?
 
             # update current timestamp
             self._t_curr += (-1 if reverse_time else 1) * self._t_step
