@@ -12,28 +12,47 @@ class Camera(Transformable):
     See for more info: https://www.evl.uic.edu/ralph/508S98/coordinates.html.
     """
     def __init__(self,
-                 aov_h: float,
-                 img_size: Tuple[int, int],
+                 aov_h: float = 45.0,
+                 img_size: Tuple[int, int] = (1920, 1080),
                  pose: Union[list, tuple, np.ndarray] = [0., 0., 0.],
                  eulers: Union[list, tuple, np.ndarray] = [0., 0., 0.]):
         super().__init__(pose, eulers)
-        self.aov_h = aov_h
-        self.img_size = img_size
+        self._aov_h = aov_h
+        self._img_w = img_size[0]
+        self._img_h = img_size[1]
         self.z_clipping_far = 1000.0
         self.z_clipping_near = 0.001
 
-    def set_aovh(self, aov_h: float):
-        self.aov_h = aov_h
+    @property
+    def aov_h(self) -> float:
+        return self._aov_h
 
-    def zoom(self, angles: float):
-        self.aov_h += angles
+    @aov_h.setter
+    def aov_h(self, val: float):
+        self._aov_h = val
+
+    @property
+    def img_w(self) -> int:
+        return self._img_w
+
+    @img_w.setter
+    def img_w(self, val: int):
+        self._img_w = val
+
+    @property
+    def img_h(self) -> int:
+        return self._img_h
+
+    @img_h.setter
+    def img_h(self, val: int):
+        self._img_h = val
 
     def get_intrinsic_matrix(self):
         mat = np.zeros((3, 3), dtype=np.float32)
-        mat[0, 0] = self.img_size[0] / (2 * np.tan(np.radians(self.aov_h) / 2))
+        mat[0, 0] = self._img_w / (2 * np.tan(np.radians(self._aov_h) / 2))
         mat[1, 1] = mat[0, 0]
-        mat[0, 2] = (self.img_size[0] - 1) / 2
-        mat[1, 2] = (self.img_size[1] - 1) / 2
+        mat[0, 2] = (self._img_w - 1) / 2
+        mat[1, 2] = (self._img_h - 1) / 2
         mat[2, 2] = 1
 
         return mat
@@ -67,7 +86,7 @@ class Camera(Transformable):
             point2d = np.matmul(intr_mat, point3d)
             point2d /= point2d[2]
             point2d = point2d[:2]
-            if not (0 < point2d[0] <= self.img_size[0]) or not (0 < point2d[1] <= self.img_size[1]):
+            if not (0 < point2d[0] <= self._img_w) or not (0 < point2d[1] <= self._img_h):
                 continue
             points2d.append(point2d)
 

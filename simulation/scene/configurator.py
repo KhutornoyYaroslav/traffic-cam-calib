@@ -5,7 +5,7 @@ from simulation.objects.planegrid import PlaneGrid
 from simulation.objects.vehicle import Vehicle, LABELS
 
 
-class SceneReader():
+class SceneConfigurator():
     def __init__(self, scene: Scene):
         self._scene = scene
 
@@ -23,7 +23,7 @@ class SceneReader():
     def parse_vehicles(self, data: dict):
         vehicles = data.get("vehicles", [])
         for vehicle in vehicles:
-            model_path = vehicle.get("model_path", [])
+            model_path = vehicle.get("model_path", self._scene.get_random_model_file())
             new_vehicle = Vehicle()
             new_vehicle.load_from_file(model_path, LABELS)
             vehicle_id = self._scene.add_vehicle(new_vehicle)
@@ -38,7 +38,7 @@ class SceneReader():
                                step=pg_data["step"])
         self._scene.plane_grid = plane_grid
 
-    def read(self, filepath: str):
+    def configurate(self, filepath: str):
         with open(filepath, 'r') as f:
             data = json.load(f)
             self.parse_common(data)

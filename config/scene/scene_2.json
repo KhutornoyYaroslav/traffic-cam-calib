@@ -4,8 +4,8 @@
     "plane_grid": {
         "x_min": -4.0,
         "x_max": 4.0,
-        "z_min": -10.0,
-        "z_max": 100.0,
+        "z_min": -70.0,
+        "z_max": 70.0,
         "step": 1.0
     },
     "routes": [
@@ -26,7 +26,6 @@
     ],
     "vehicles": [
         {
-            "model_path": "data/models/Ford_Mondeo.json",
             "route_id": 0,
             "randomize_model": true
         },

@@ -22,7 +22,7 @@ class Transformable():
 
     @property
     def pose(self) -> np.ndarray:
-        return self._pose
+        return self._pose.copy()
 
     @pose.setter
     def pose(self, val: Union[list, tuple, np.ndarray]):
@@ -30,7 +30,7 @@ class Transformable():
 
     @property
     def eulers(self) -> np.ndarray:
-        return self._eulers
+        return self._eulers.copy()
 
     @eulers.setter
     def eulers(self, val: Union[list, tuple, np.ndarray]):
