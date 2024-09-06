@@ -1,7 +1,8 @@
 import numpy as np
+from copy import deepcopy
 from typing import Union, Dict
-from engine.math.eulers import eulers2rotmat
-from engine.common.transformable import Transformable, check_value
+from core.math.eulers import eulers2rotmat
+from core.common.transformable import Transformable, check_value
 
 
 class Skeleton3d(Transformable):
@@ -16,7 +17,7 @@ class Skeleton3d(Transformable):
 
     @property
     def nodes(self) -> Dict[str,  np.ndarray]:
-        return self._nodes
+        return deepcopy(self._nodes)
 
     @nodes.setter
     def nodes(self, val: Dict[str,  Union[list, tuple, np.ndarray]]):
@@ -24,7 +25,7 @@ class Skeleton3d(Transformable):
 
     @property
     def edges(self) -> list:
-        return self._edges
+        return deepcopy(self._edges)
 
     @edges.setter
     def edges(self, val: list):
@@ -34,7 +35,7 @@ class Skeleton3d(Transformable):
         return len(self._nodes)
 
     def node(self, label: str) -> np.ndarray:
-        return self._nodes[label]
+        return deepcopy(self._nodes[label])
 
     def world_node(self, label: str) -> np.ndarray:
         return self.world_nodes()[label]

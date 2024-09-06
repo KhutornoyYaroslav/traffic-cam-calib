@@ -1,47 +1,39 @@
 import json
 from simulation.scene.scene import Scene
 from simulation.routing.route import Route
-from simulation.objects.planegrid import PlaneGrid
-from simulation.objects.vehicle import Vehicle, LABELS
+from core.objects.carskeleton3d import CarSkeleton3d
+from core.objects.carskeleton3d import LABELS as car_keypoints_labels
 
 
-class SceneConfigurator():
+class Configurator():
     def __init__(self, scene: Scene):
-        self._scene = scene
+        self.scene = scene
 
     def parse_common(self, data: dict):
-        self._scene.loop_routes = data.get("loop_routes", False)
-        self._scene.models_dir = data.get("models_dir", "")
+        self.scene.loop_routes = data.get("loop_routes", False)
+        self.scene.car_models_path = data.get("car_models_path", "")
 
     def parse_routes(self, data: dict):
         routes = data.get("routes", [])
         for route in routes:
             waypoints = route.get("waypoints", [])
             dts = route.get("dts", [])
-            self._scene.add_route(Route(waypoints, dts))
+            self.scene.add_route(Route(waypoints, dts))
 
-    def parse_vehicles(self, data: dict):
-        vehicles = data.get("vehicles", [])
-        for vehicle in vehicles:
-            model_path = vehicle.get("model_path", self._scene.get_random_model_file())
-            new_vehicle = Vehicle()
-            new_vehicle.load_from_file(model_path, LABELS)
-            vehicle_id = self._scene.add_vehicle(new_vehicle)
-            self._scene.vehicle_route_map[vehicle_id] = vehicle.get("route_id", None)
-            if vehicle.get("randomize_model", False):
-                self._scene.vehicles_to_randomize.append(vehicle_id)
-
-    def prase_plane_grid(self, data: dict):
-        pg_data = data.get("plane_grid", {})
-        plane_grid = PlaneGrid(x_range=(pg_data["x_min"], pg_data["x_max"]),
-                               z_range=(pg_data["z_min"], pg_data["z_max"]),
-                               step=pg_data["step"])
-        self._scene.plane_grid = plane_grid
+    def parse_cars(self, data: dict):
+        cars_params = data.get("cars", [])
+        for car_params in cars_params:
+            model_path = car_params.get("model_path", self.scene.get_random_car_model_filepath())
+            new_car = CarSkeleton3d()
+            new_car.load_from_file(model_path, car_keypoints_labels)
+            car_idx = self.scene.add_car(new_car)
+            self.scene.car_route_map[car_idx] = car_params.get("route_id", None)
+            if car_params.get("randomize_model", False):
+                self.scene.car_idxs_to_randomize.append(car_idx)
 
     def configurate(self, filepath: str):
         with open(filepath, 'r') as f:
             data = json.load(f)
             self.parse_common(data)
             self.parse_routes(data)
-            self.parse_vehicles(data)
-            self.prase_plane_grid(data)
+            self.parse_cars(data)

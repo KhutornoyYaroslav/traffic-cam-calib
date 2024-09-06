@@ -25,9 +25,9 @@ def run_simulator(config_path: str, autoplay: bool = True):
 if __name__ == "__main__":
     # parse args
     parser = argparse.ArgumentParser(description='Traffic Scene Simulator')
-    parser.add_argument("-c", "--config-file", dest="config_file", required=False, type=str, default="config/simulation/sim_1.json",
-                        help="path to config file")
-    parser.add_argument("-a", "--autoplay", dest="autoplay", required=False, default='False', type=str2bool,
+    parser.add_argument("-c", "--config-file", dest="config_file", type=str, default="config/simulation/sim_1.json",
+                        help="Path to config file")
+    parser.add_argument("-a", "--autoplay", dest="autoplay", type=str2bool, default='True',
                         help="Wheter to autoplay or by key press")
     args = parser.parse_args()
 

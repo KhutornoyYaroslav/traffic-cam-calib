@@ -1,0 +1,17 @@
+- core
+    - camera
+    - objects
+- simulation
+    - objects (?)
+    - routing
+    - scene
+- calibration
+    - pnp_calibrator
+    - vp_calibrator
+- drawing
+    - drawer(s)
+
+
+
+For simulation use only:
+    duration, dt    (t_start = 0 always)

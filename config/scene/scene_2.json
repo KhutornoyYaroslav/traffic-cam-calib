@@ -1,13 +1,6 @@
 {
-    "models_dir": "data/models/",
+    "car_models_path": "data/models/",
     "loop_routes": true,
-    "plane_grid": {
-        "x_min": -4.0,
-        "x_max": 4.0,
-        "z_min": -10.0,
-        "z_max": 100.0,
-        "step": 1.0
-    },
     "routes": [
         {
             "waypoints": [
@@ -24,7 +17,7 @@
             "dts": [3.0]
         }
     ],
-    "vehicles": [
+    "cars": [
         {
             "route_id": 0,
             "randomize_model": true

@@ -1,0 +1,26 @@
+{
+    "simulator_config_path": "config/simulation/sim_1.json",
+    "camera_to_calibrate": {
+        "name": "main_camera",
+        "sim_errors": {
+            "pose": {
+                "x_std": 0.02,
+                "y_std": 0.005,
+                "z_std": 0.02
+            },
+            "eulers": {
+                "x_std": 0.01,
+                "y_std": 0.005,
+                "z_std": 0.01
+            }
+        }
+    },
+    "vehicles_errors": {
+        "points_detection_rate": 0.5,
+        "points_detection_error": {
+            "x_std": 0.02,
+            "y_std": 0.02,
+            "z_std": 0.02
+        }
+    }
+}

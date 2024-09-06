@@ -1,57 +1,28 @@
 {
-    "draw_scene": true,
-    "draw_plane_grid": true,
-    "draw_routes": false,
+    "draw_routes": true,
+    "draw_plane_grid": false,
     "scene_config_path": "config/scene/scene_2.json",
     "cameras": [
         {
-            "aov_h": 50.0,
-            "img_w": 1920,
-            "img_h": 1080,
-            "pose": {
-                "x": -5.0,
-                "y": -5.0,
-                "z": -15.0
-            },
-            "eulers": {
-                "x": -15.0,
-                "y": 20.0,
-                "z": 0.0      
+            "name": "main_camera",
+            "params": {
+                "aov_h": 50.0,
+                "img_w": 1920,
+                "img_h": 1080,
+                "pose": {
+                    "x": -5.0,
+                    "y": -5.0,
+                    "z": -15.0
+                },
+                "eulers": {
+                    "x": -15.0,
+                    "y": 20.0,
+                    "z": 0.0
+                }
             }
         }
     ],
     "t_start": 0.0,
-    "t_stop": 10.0,
-    "t_step": 0.05,
-    "errors_modelling": {
-        "vehicle": {
-            "points_error": {
-                "x_mean": 0.0,
-                "x_std": 0.0,
-                "y_mean": 0.0,
-                "y_std": 0.0,
-                "z_mean": 0.0,
-                "z_std": 0.0
-            },
-            "points_miss_rate": 0.5
-        },
-        "camera": {
-            "pose_error": {
-                "x_mean": 0.0,
-                "x_std": 0.0,
-                "y_mean": 0.0,
-                "y_std": 0.0,
-                "z_mean": 0.0,
-                "z_std": 0.0
-            },
-            "eulers_error": {
-                "x_mean": 0.0,
-                "x_std": 0.0,
-                "y_mean": 0.0,
-                "y_std": 0.0,
-                "z_mean": 0.0,
-                "z_std": 0.0
-            }
-        }
-    }
+    "t_stop": 100.0,
+    "t_step": 0.05
 }

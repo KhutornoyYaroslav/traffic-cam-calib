@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union
-from engine.math.eulers import heading_to_eulers
-from simulation.drawing.drawable import Drawable, Camera, Axes
+from copy import deepcopy
+from core.math.eulers import heading_to_eulers
 
 
 def check_waypoints(val: Union[list, np.ndarray]):
@@ -22,18 +22,18 @@ def check_dts(val: Union[list, np.ndarray]):
     return val
 
 
-class Route(Drawable):
+class Route():
     def __init__(self,
                  waypoints: Union[list, np.ndarray],
                  dts: Union[list, np.ndarray]):
-        # super(Drawable, self).__init__()
         self._waypoints = check_waypoints(waypoints)
         self._dts = check_dts(dts)
         assert self._waypoints.shape[0] - self._dts.shape[0] == 1
+        self.loop_enable = False
 
     @property
     def waypoints(self) -> np.ndarray:
-        return self._waypoints
+        return deepcopy(self._waypoints)
 
     @waypoints.setter
     def waypoints(self, val: Union[list, np.ndarray]):
@@ -41,7 +41,7 @@ class Route(Drawable):
 
     @property
     def dts(self) -> np.ndarray:
-        return self._dts
+        return deepcopy(self._dts)
 
     @dts.setter
     def dts(self, val: Union[list, np.ndarray]):
@@ -58,6 +58,14 @@ class Route(Drawable):
 
     def duration(self) -> float:
         return np.sum(self._dts)     
+
+    # TODO: finish it
+    def _process_timestamp(self, timestamp: float) -> float:
+        if self.loop_enable and self.duration() > 0.0:
+            # cycle = int(timestamp // self.duration())
+            return timestamp % self.duration()
+
+        return timestamp
 
     def interpolate_pose(self, timestamp: float) -> np.ndarray:
         assert timestamp >= 0, "timestamp must be positive"
@@ -94,22 +102,22 @@ class Route(Drawable):
 
         return False
 
-    def draw(self, canvas: Axes, camera: Camera):
-        # color
-        color = (0.8, 0.5, 0.8)
+    # def draw(self, canvas: Axes, camera: Camera):
+    #     # color
+    #     color = (0.8, 0.5, 0.8)
 
-        # draw edges
-        for wp_idx in range(0, len(self._waypoints) - 1):
-            wp_1 = self._waypoints[wp_idx]
-            wp_2 = self._waypoints[wp_idx + 1]
+    #     # draw edges
+    #     for wp_idx in range(0, len(self._waypoints) - 1):
+    #         wp_1 = self._waypoints[wp_idx]
+    #         wp_2 = self._waypoints[wp_idx + 1]
 
-            res = camera.project_line(wp_1, wp_2)
-            if res is not None:
-                res = np.stack(res, 0)
-                canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
+    #         res = camera.project_line(wp_1, wp_2)
+    #         if res is not None:
+    #             res = np.stack(res, 0)
+    #             canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
 
-        # draw nodes
-        points2d = camera.project_points(self._waypoints)
-        if points2d is not None:
-            for point2d in points2d:
-                canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=1)
+    #     # draw nodes
+    #     points2d = camera.project_points(self._waypoints)
+    #     if points2d is not None:
+    #         for point2d in points2d:
+    #             canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=1)
