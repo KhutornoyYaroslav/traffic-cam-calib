@@ -19,13 +19,14 @@ class NormalError3d():
         z = np.random.normal(self.z_mean, self.z_std, 1)
 
         return np.concatenate([x, y, z], 0)
-    
-    def from_json(self, data: dict):
-        self.x_mean = data.get("x_mean", self.x_mean)
-        self.x_std = data.get("x_std", self.x_std)
-        self.y_mean = data.get("y_mean", self.y_mean)
-        self.y_std = data.get("y_std", self.y_std)
-        self.z_mean = data.get("z_mean", self.z_mean)
-        self.z_std = data.get("z_std", self.z_std)
 
-        return self
+    @staticmethod
+    def from_json(data: dict):
+        return NormalError3d(
+            x_mean=data.get("x_mean", 0.),
+            x_std=data.get("x_std", 0.),
+            y_mean=data.get("y_mean", 0.),
+            y_std=data.get("y_std", 0.),
+            z_mean=data.get("z_mean", 0.),
+            z_std=data.get("z_std", 0.),
+        )

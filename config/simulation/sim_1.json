@@ -1,10 +1,8 @@
 {
-    "draw_routes": true,
-    "draw_plane_grid": false,
     "scene_config_path": "config/scene/scene_2.json",
     "cameras": [
         {
-            "name": "main_camera",
+            "name": "cam_1",
             "params": {
                 "aov_h": 50.0,
                 "img_w": 1920,
@@ -19,10 +17,31 @@
                     "y": 20.0,
                     "z": 0.0
                 }
+            },
+            "errors": {
+                "pose": {
+                    "x_std": 0.0,
+                    "y_std": 0.0,
+                    "z_std": 0.0
+                },
+                "eulers": {
+                    "x_std": 0.0,
+                    "y_std": 0.0,
+                    "z_std": 0.0
+                }
             }
         }
     ],
-    "t_start": 0.0,
-    "t_stop": 100.0,
-    "t_step": 0.05
+    "cars_errors": {
+        "pose": {
+            "x_std": 0.1,
+            "y_std": 0.01,
+            "z_std": 0.0
+        },
+        "eulers": {
+            "x_std": 3.01,
+            "y_std": 3.01,
+            "z_std": 3.01
+        }
+    }
 }

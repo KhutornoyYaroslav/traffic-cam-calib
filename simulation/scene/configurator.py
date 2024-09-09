@@ -10,7 +10,6 @@ class Configurator():
         self.scene = scene
 
     def parse_common(self, data: dict):
-        self.scene.loop_routes = data.get("loop_routes", False)
         self.scene.car_models_path = data.get("car_models_path", "")
 
     def parse_routes(self, data: dict):
@@ -18,7 +17,8 @@ class Configurator():
         for route in routes:
             waypoints = route.get("waypoints", [])
             dts = route.get("dts", [])
-            self.scene.add_route(Route(waypoints, dts))
+            loop = route.get("loop", False)
+            self.scene.add_route(Route(waypoints, dts, loop))
 
     def parse_cars(self, data: dict):
         cars_params = data.get("cars", [])

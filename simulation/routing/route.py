@@ -25,11 +25,14 @@ def check_dts(val: Union[list, np.ndarray]):
 class Route():
     def __init__(self,
                  waypoints: Union[list, np.ndarray],
-                 dts: Union[list, np.ndarray]):
+                 dts: Union[list, np.ndarray],
+                 loop_enable: bool = False):
         self._waypoints = check_waypoints(waypoints)
         self._dts = check_dts(dts)
         assert self._waypoints.shape[0] - self._dts.shape[0] == 1
-        self.loop_enable = False
+        self.loop_enable = loop_enable
+        self._prev_cycle = None
+        self._cycle_changed = False
 
     @property
     def waypoints(self) -> np.ndarray:
@@ -57,17 +60,22 @@ class Route():
         return result
 
     def duration(self) -> float:
-        return np.sum(self._dts)     
+        return np.sum(self._dts)
 
-    # TODO: finish it
+    def cycle_changed(self) -> bool:
+        return self._cycle_changed
+
     def _process_timestamp(self, timestamp: float) -> float:
         if self.loop_enable and self.duration() > 0.0:
-            # cycle = int(timestamp // self.duration())
+            cur_cycle = int(timestamp // self.duration())
+            self._cycle_changed = self._prev_cycle != None and cur_cycle != self._prev_cycle
+            self._prev_cycle = cur_cycle
             return timestamp % self.duration()
 
         return timestamp
 
     def interpolate_pose(self, timestamp: float) -> np.ndarray:
+        timestamp = self._process_timestamp(timestamp)
         assert timestamp >= 0, "timestamp must be positive"
         dt_sum = 0.0
         for i, dt in enumerate(self._dts):
@@ -82,6 +90,7 @@ class Route():
         return self._waypoints[-1]
 
     def interpolate_eulers(self, timestamp: float) -> np.ndarray:
+        timestamp = self._process_timestamp(timestamp)
         assert timestamp >= 0, "timestamp must be positive"
         last_eulers = np.zeros(3, np.float32)
         dt_sum = 0.0
@@ -101,23 +110,3 @@ class Route():
             return True
 
         return False
-
-    # def draw(self, canvas: Axes, camera: Camera):
-    #     # color
-    #     color = (0.8, 0.5, 0.8)
-
-    #     # draw edges
-    #     for wp_idx in range(0, len(self._waypoints) - 1):
-    #         wp_1 = self._waypoints[wp_idx]
-    #         wp_2 = self._waypoints[wp_idx + 1]
-
-    #         res = camera.project_line(wp_1, wp_2)
-    #         if res is not None:
-    #             res = np.stack(res, 0)
-    #             canvas.plot(res[:, 0], res[:, 1], color=color, lw=1, alpha=0.5)
-
-    #     # draw nodes
-    #     points2d = camera.project_points(self._waypoints)
-    #     if points2d is not None:
-    #         for point2d in points2d:
-    #             canvas.plot(point2d[0], point2d[1], 'o', color=color, markersize=1)

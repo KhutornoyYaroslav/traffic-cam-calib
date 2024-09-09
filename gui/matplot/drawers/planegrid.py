@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Tuple
-from simulation.drawing.drawable import Drawable, Axes, Camera
+from gui.matplot.common.drawable import Drawable, Axes, Camera
 
 
 class PlaneGrid(Drawable):
