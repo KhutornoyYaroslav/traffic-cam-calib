@@ -5,6 +5,7 @@ from simulation.simulator.configurator import Configurator
 from gui.matplot.drawer import Drawer
 from gui.matplot.drawers.route import RouteDrawer
 from gui.matplot.drawers.car import CarSkeletonDrawer
+from gui.matplot.drawers.planegrid import PlaneGrid
 
 
 def signal_handler(sig, frame):
@@ -42,7 +43,7 @@ def run_simulator(config_path: str,
     time_current = time_start
     reverse_time = time_finish < time_start
 
-    static_drawables = []
+    static_drawables = [] # [PlaneGrid((-5, 5), (-20, 70))]
     for route in simulator.get_routes():
         static_drawables.append(RouteDrawer(route))
 

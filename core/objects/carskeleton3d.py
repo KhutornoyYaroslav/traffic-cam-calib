@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from typing import List, Union
+from typing import List, Union, Dict
 from core.camera.camera import Camera
 from core.objects.skeleton3d import Skeleton3d
 from core.math.geometry import plane_normal, vectors_angle
@@ -206,5 +206,23 @@ class CarSkeleton3d(Skeleton3d):
 
             if best_angle < np.deg2rad(max_angle):
                 result.append(label)
+
+        return result
+
+    def get_projection(self,
+                       camera: Camera,
+                       only_visible_nodes: bool = False) -> Dict[str, np.ndarray]:
+        result = {}
+
+        if only_visible_nodes:
+            labels = self.get_visible_node_labels(camera)
+        else:
+            labels = self._nodes.keys()
+
+        for label in labels:
+            pt_3d = self.world_node(label)
+            pt_2d = camera.project_points([pt_3d])
+            if pt_2d is not None:
+                result[label] = pt_2d[0]
 
         return result
