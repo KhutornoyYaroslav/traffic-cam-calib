@@ -33,6 +33,7 @@ class Route():
         self.loop_enable = loop_enable
         self._prev_cycle = None
         self._cycle_changed = False
+        self._cycle_counter = 0
 
     @property
     def waypoints(self) -> np.ndarray:
@@ -64,18 +65,22 @@ class Route():
 
     def cycle_changed(self) -> bool:
         return self._cycle_changed
+    
+    def cycle_count(self) -> int:
+        return self._cycle_counter
 
-    def _process_timestamp(self, timestamp: float) -> float:
+    def process_timestamp(self, timestamp: float) -> float:
         if self.loop_enable and self.duration() > 0.0:
             cur_cycle = int(timestamp // self.duration())
             self._cycle_changed = self._prev_cycle != None and cur_cycle != self._prev_cycle
+            if self._cycle_changed:
+                self._cycle_counter += 1
             self._prev_cycle = cur_cycle
             return timestamp % self.duration()
 
         return timestamp
 
     def interpolate_pose(self, timestamp: float) -> np.ndarray:
-        timestamp = self._process_timestamp(timestamp)
         assert timestamp >= 0, "timestamp must be positive"
         dt_sum = 0.0
         for i, dt in enumerate(self._dts):
@@ -90,7 +95,6 @@ class Route():
         return self._waypoints[-1]
 
     def interpolate_eulers(self, timestamp: float) -> np.ndarray:
-        timestamp = self._process_timestamp(timestamp)
         assert timestamp >= 0, "timestamp must be positive"
         last_eulers = np.zeros(3, np.float32)
         dt_sum = 0.0

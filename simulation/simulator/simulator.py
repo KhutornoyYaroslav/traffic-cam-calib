@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Union
+from typing import List, Dict
 from core.objects.carskeleton3d import CarSkeleton3d
 from core.camera.camera import Camera
 from simulation.scene.scene import Scene
@@ -44,6 +44,18 @@ class Simulator():
         if name in self.camera_eulers_error:
             camera.eulers += self.camera_eulers_error[name].rand()
         return camera
+    
+    def get_cameras(self) -> Dict[str, Camera]:
+        result = {}
+        for name, cam in self._cameras.items():
+            res_cam = deepcopy(cam)
+            if name in self.camera_pose_error:
+                res_cam.pose += self.camera_pose_error[name].rand()
+            if name in self.camera_eulers_error:
+                res_cam.eulers += self.camera_eulers_error[name].rand()
+            result[name] = res_cam
+
+        return result
 
     def update(self, timestamp: float):
         self._scene.update_world(timestamp)

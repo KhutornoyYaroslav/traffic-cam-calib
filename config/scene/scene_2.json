@@ -16,6 +16,14 @@
                 [2, 0, 60]
             ],
             "dts": [3.0]
+        },
+        {
+            "loop": true,
+            "waypoints": [
+                [6, 0, 70],
+                [6, 0, -20]
+            ],
+            "dts": [1.0]
         }
     ],
     "cars": [
@@ -26,6 +34,10 @@
         {
             "model_path": "data/car_models/Smart.json",
             "route_id": 1,
+            "randomize_model": true
+        },
+        {
+            "route_id": 2,
             "randomize_model": true
         }
     ]

@@ -16,7 +16,12 @@ def str2bool(s):
     return s.lower() in ('true', '1')
 
 
-# TODO: autoplay to GUI drawer class
+def on_keyboard_press(event):
+    global interrupted
+    if event.key == 'q':
+        interrupted = True
+
+
 def run_simulator(config_path: str,
                   time_start: float,
                   time_finish: float,
@@ -31,31 +36,27 @@ def run_simulator(config_path: str,
     configurator.configurate(config_path)
 
     # create gui
-    drawer = Drawer()
+    drawer = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
 
     # main loop
     time_current = time_start
     reverse_time = time_finish < time_start
+
+    static_drawables = []
+    for route in simulator.get_routes():
+        static_drawables.append(RouteDrawer(route))
 
     while not interrupted and time_current < time_finish:
         print(f"Update simulation at {time_current:.2f}s.")
         simulator.update(time_current)
         time_current += (-1 if reverse_time else 1) * time_step
 
-        # create drawables
-        drawables = []
-        for car in simulator.get_cars():
-            drawables.append(CarSkeletonDrawer(car))
-        for route in simulator.get_routes():
-            drawables.append(RouteDrawer(route))
-        drawer.set_drawables(drawables)
-
-        # get camera
-        cam_name = simulator.get_cameras_names()[0]
-        camera = simulator.get_camera(cam_name)
-
         # draw
-        drawer.redraw(camera)
+        dynamic_drawables = []
+        for car in simulator.get_cars():
+            dynamic_drawables.append(CarSkeletonDrawer(car))
+        cameras = simulator.get_cameras()
+        drawer.draw(cameras, static_drawables + dynamic_drawables, autoplay)
 
     print(f"Simulation finished.")
 

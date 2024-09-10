@@ -58,8 +58,10 @@ class Scene():
                 continue
             car = self._cars[c_idx]
             route = self._routes[r_idx]
-            car.pose = route.interpolate_pose(timestamp)
-            car.eulers = route.interpolate_eulers(timestamp)
+            ts = route.process_timestamp(timestamp)
+            car.pose = route.interpolate_pose(ts)
+            car.eulers = route.interpolate_eulers(ts)
             if route.cycle_changed():
+                # print(f"Route {r_idx} cycle counts: {route.cycle_count()}")
                 if c_idx in self.car_idxs_to_randomize:
                     car.load_from_file(self.get_random_car_model_filepath())
