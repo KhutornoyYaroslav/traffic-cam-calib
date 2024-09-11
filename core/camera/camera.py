@@ -45,6 +45,27 @@ class Camera(Transformable):
     def get_proj_matrix(self):
         return np.matmul(self.get_intrinsic_matrix(), self.get_extrinsic_matrix())
 
+    def unproject_point(self,
+                        point2d: np.ndarray,
+                        plane_norm: np.ndarray,
+                        plane_orig: np.ndarray) -> Union[np.ndarray, None]:
+        # TODO: check with geoemtry.line_plane_intersection
+        intr_mat = self.get_intrinsic_matrix()
+        rot_mat = eulers2rotmat(self.eulers, degrees=True)
+        direction = np.matmul(rot_mat, np.matmul(np.linalg.inv(intr_mat), np.append(point2d, 1.0)))
+        denom = np.dot(plane_norm, direction)
+
+        eps = 1e-6
+        w = 0.0
+        has_intersect = False
+
+        if np.abs(denom) > eps:
+            w = np.dot(plane_orig - self._pose, plane_norm) / denom
+            if w > eps:
+                has_intersect = True
+
+        return (w * direction + self._pose) if has_intersect else None
+
     def project_points(self, points3d: np.ndarray):
         intr_mat = self.get_intrinsic_matrix()
         extr_mat = self.get_extrinsic_matrix()

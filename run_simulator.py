@@ -7,6 +7,9 @@ from gui.matplot.drawers.route import RouteDrawer
 from gui.matplot.drawers.car import CarSkeletonDrawer
 from gui.matplot.drawers.planegrid import PlaneGrid
 
+from calibration.pnp.optimization.reproj import ReprojSolver
+from glob import glob
+from core.objects.carskeleton3d import CarSkeleton3d, LABELS
 
 def signal_handler(sig, frame):
     global interrupted
@@ -39,6 +42,14 @@ def run_simulator(config_path: str,
     # create gui
     drawer = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
 
+    # create solver
+    car_models = []
+    for model_file in sorted(glob("data/car_models/*.json")):
+        car = CarSkeleton3d()
+        car.load_from_file(model_file, LABELS)
+        car_models.append(car)
+    bounds = [(-10.0, 0.0), (-30.0, 30.0), (-5.0, 5.0), (0.0, 100.0), (0.0, 360.0), (0, len(car_models))]
+
     # main loop
     time_current = time_start
     reverse_time = time_finish < time_start
@@ -51,6 +62,18 @@ def run_simulator(config_path: str,
         print(f"Update simulation at {time_current:.2f}s.")
         simulator.update(time_current)
         time_current += (-1 if reverse_time else 1) * time_step
+
+        # calibrate
+        camera = list(simulator.get_cameras().values())[0]
+        cars_2d = []
+        for car in simulator.get_cars():
+            car2d = car.get_projection(camera, only_visible_nodes=True)
+            cars_2d.append(car2d)
+        if len(cars_2d) > 1:
+            solver = ReprojSolver(camera.img_w, camera.img_h, bounds, car_models)
+            results = solver.solve(cars_2d)
+            print('results: ')
+            print("cam_ty: {:.2f}\ncam_rx: {:.2f}\ncam_rz: {:.2f}\ncam_fx: {:.2f}\n".format(*results[:4]))
 
         # draw
         dynamic_drawables = []
@@ -73,7 +96,7 @@ if __name__ == "__main__":
                         help="Simulation start timestamp")
     parser.add_argument("-tf", "--time-finish", dest="time_finish", type=float, default=100.0,
                         help="Simulation finish timestamp")
-    parser.add_argument("-dt", "--time-step", dest="time_step", type=float, default=0.05,
+    parser.add_argument("-dt", "--time-step", dest="time_step", type=float, default=0.2,
                         help="Simulation time step")
     args = parser.parse_args()
 
