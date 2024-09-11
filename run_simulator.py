@@ -11,6 +11,8 @@ from calibration.pnp.optimization.reproj import ReprojSolver
 from glob import glob
 from core.objects.carskeleton3d import CarSkeleton3d, LABELS
 
+from core.camera.camera import Camera
+
 def signal_handler(sig, frame):
     global interrupted
     interrupted = True
@@ -41,6 +43,7 @@ def run_simulator(config_path: str,
 
     # create gui
     drawer = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
+    drawer2 = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
 
     # create solver
     car_models = []
@@ -48,7 +51,7 @@ def run_simulator(config_path: str,
         car = CarSkeleton3d()
         car.load_from_file(model_file, LABELS)
         car_models.append(car)
-    bounds = [(-10.0, 0.0), (-30.0, 30.0), (-5.0, 5.0), (0.0, 100.0), (0.0, 360.0), (0, len(car_models))]
+    bounds = [(-10.0, 0.0), (-30.0, 0.0), (-10.0, 10.0), (1.0, 120.0), (0.0, 360.0), (0, len(car_models) - 1)]
 
     # main loop
     time_current = time_start
@@ -59,28 +62,37 @@ def run_simulator(config_path: str,
         static_drawables.append(RouteDrawer(route))
 
     while not interrupted and time_current < time_finish:
-        print(f"Update simulation at {time_current:.2f}s.")
+        # print(f"Update simulation at {time_current:.2f}s.")
         simulator.update(time_current)
         time_current += (-1 if reverse_time else 1) * time_step
 
         # calibrate
         camera = list(simulator.get_cameras().values())[0]
+        # camera_res = None
         cars_2d = []
         for car in simulator.get_cars():
             car2d = car.get_projection(camera, only_visible_nodes=True)
             cars_2d.append(car2d)
-        if len(cars_2d) > 1:
+        if len(cars_2d) == 2:
             solver = ReprojSolver(camera.img_w, camera.img_h, bounds, car_models)
             results = solver.solve(cars_2d)
-            print('results: ')
-            print("cam_ty: {:.2f}\ncam_rx: {:.2f}\ncam_rz: {:.2f}\ncam_fx: {:.2f}\n".format(*results[:4]))
+            # print('results: ')
+            print("cam_ty: {:.2f}\tcam_rx: {:.2f}\tcam_rz: {:.2f}\tcam_fx: {:.2f}".format(*results[:4]))
+
+            # camera_res = Camera(aov_h=results[3],
+            #                     img_size=(camera.img_w, camera.img_h),
+            #                     pose=(camera.pose[0], results[0], camera.pose[2]),
+            #                     eulers=(results[1], camera.eulers[1], results[2]))
 
         # draw
-        dynamic_drawables = []
-        for car in simulator.get_cars():
-            dynamic_drawables.append(CarSkeletonDrawer(car))
-        cameras = simulator.get_cameras()
-        drawer.draw(cameras, static_drawables + dynamic_drawables, autoplay)
+        # dynamic_drawables = []
+        # for car in simulator.get_cars():
+        #     dynamic_drawables.append(CarSkeletonDrawer(car))
+        # cameras = simulator.get_cameras()
+        # drawer.draw(cameras, static_drawables + dynamic_drawables, autoplay)
+
+        # if camera_res is not None:
+        #     drawer2.draw({'res_cam': camera_res}, static_drawables + dynamic_drawables, autoplay)
 
     print(f"Simulation finished.")
 

@@ -6,6 +6,10 @@ from core.camera.camera import Camera
 from copy import deepcopy
 
 
+# from fcmaes.decpp import minimize, Bounds
+from fcmaes.de import minimize, Bounds
+
+
 """
 Calculates reprojection error for given parameters.
 x : h, xr, zr, fovh, fovv, cx, cy, k1, yr1, model1, yr2, model2...
@@ -59,6 +63,8 @@ class ReprojSolver():
 
         # TODO: check bounds for car models (compare with the length of avaible car models)
 
+        self._cars_2d = None
+
     def solve(self, cars_2d: List[Dict[str, np.ndarray]]) -> List[float]:
         # check inputs
         if not len(cars_2d):
@@ -70,22 +76,58 @@ class ReprojSolver():
                                               self.base_params_size+self.variadic_params_size]
 
         # optimize
-        result = differential_evolution(func=self.reproj_error,
-                                        bounds=bounds,
-                                        args=[cars_2d],
-                                        maxiter=8,
-                                        popsize=8,
-                                        workers=-1,
-                                        disp=True
-        )
+        # result = differential_evolution(func=self.reproj_error,
+        #                                 bounds=bounds,
+        #                                 args=[cars_2d],
+        #                                 maxiter=8,
+        #                                 popsize=8,
+        #                                 workers=-1,
+        #                                 disp=True
+        # )
+
+        # return result.x
+
+        self._cars_2d = cars_2d
+        # print(bounds)
+        # de = DiffEvol(self.reproj_error, bounds, 128)
+        # x, cost = de.optimize(ngen=1024)
+        # print("cost: ", cost)
+        # return x
+
+        # ret = retry.minimize(self.reproj_error,
+        #                      bounds,
+        #                      args=[cars_2d],
+        #                     #  logger=logger(),
+        #                      optimizer=De_cpp(100))
+
+        lb_bounds = [b[0] for b in bounds]
+        ub_bounds = [b[1] for b in bounds]
+        bounds = Bounds(lb=lb_bounds, ub=ub_bounds)
+        # print(bounds)
+
+        ints = len(bounds.lb) * [0]
+        ints[5] = 1
+        ints[7] = 1
+        ints = np.array(ints, dtype=np.bool8)
+        # print(ints)
+
+        result = minimize(fun=self.reproj_error,
+                          bounds=bounds,
+                          popsize=32,
+                          max_evaluations=256,
+                          ints=ints)
+
+        # print(result)
 
         return result.x
 
-    def reproj_error(self, x: List[float], *args) -> float:
+
+    def reproj_error(self, x: List[float]) -> float: # , *args
         """
         x = cam_ty, cam_rx, cam_rz, cam_fx, veh_ry1, veh_model1, veh_ry2, veh_model2, ...
         """
-        cars_2d = args[0]
+        # cars_2d = args[0]
+        cars_2d = deepcopy(self._cars_2d)
 
         # create camera
         camera = Camera(aov_h=x[3],
@@ -101,18 +143,17 @@ class ReprojSolver():
             # create 3d car model
             model_id = int(x[self.base_params_size + x_offset + 1])
             car3d = deepcopy(self._car_models[model_id])
-            # car3d.rotate(y=x[self.base_params_size + x_offset])
-            car3d.eulers = (0.0, x[self.base_params_size + x_offset], 0.0)
+            car3d.pose = (0, 0, 0)
+            car3d.eulers = (0, 0, 0)
+            car3d.rotate(y=x[self.base_params_size + x_offset])
+            # car3d.eulers = (0.0, x[self.base_params_size + x_offset], 0.0)
 
             # calc x, z vehicle position
             x_mean, z_mean = [], []
             for label, ref_point2d in car2d.items():
-                if ref_point2d is None:
-                    continue
-
-                ref_point3d = car3d.node(label) # TODO: check if label doesn't exist?
+                ref_point3d = car3d.world_node(label) # TODO: check if label doesn't exist?
                 plane_norm = np.array([0, -1.0, 0])
-                plane_orig = np.array([0, ref_point3d[2], 0])
+                plane_orig = np.array([0, ref_point3d[1], 0])
                 point3d = camera.unproject_point(ref_point2d, plane_norm, plane_orig)
                 if point3d is None:
                     continue
@@ -125,7 +166,11 @@ class ReprojSolver():
                 cars_reproj_errors.append(1000.0) # TODO: fictive error
                 continue
 
-            car3d.pose = (np.mean(x_mean), 0.0, np.mean(z_mean))
+            car3d.translate(x=np.mean(x_mean), z=np.mean(z_mean))
+            # car3d.pose = (np.mean(x_mean), 0.0, np.mean(z_mean))
+            # print(car3d.pose)
+
+            # print(car3d.pose, car3d.eulers)
 
             # project car3d and calc error
             car_errors = []
@@ -140,14 +185,15 @@ class ReprojSolver():
                 err = np.linalg.norm(proj_point2d - real_point2d)
                 car_errors.append(err)
 
-            if not len(car_errors):
-                cars_reproj_errors.extend([1000.0]) # TODO:
-            else:
-                cars_reproj_errors.extend(car_errors)
+            # if not len(car_errors):
+            #     cars_reproj_errors.extend([1000.0]) # TODO:
+            # else:
+            cars_reproj_errors.extend(car_errors)
+            # cars_reproj_errors.append(np.mean(car_errors))
 
         # print(len(cars_reproj_errors))
         # TODO:
-        if not len(cars_reproj_errors):
-            return 1000.0
-        else:
-            return np.mean(cars_reproj_errors)
+        # if not len(cars_reproj_errors):
+            # return 1000.0
+        # else:
+        return np.mean(cars_reproj_errors)

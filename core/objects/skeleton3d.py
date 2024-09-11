@@ -39,7 +39,7 @@ class Skeleton3d(Transformable):
 
     def world_node(self, label: str) -> np.ndarray:
         return self.world_nodes()[label]
-    
+
     def centroid(self) -> np.ndarray:
        return np.mean(list(self._nodes.values()), axis=0)
 
