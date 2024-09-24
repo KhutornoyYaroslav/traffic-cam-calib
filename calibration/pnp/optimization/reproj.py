@@ -8,6 +8,7 @@ from copy import deepcopy
 
 # from fcmaes.decpp import minimize, Bounds
 from fcmaes.de import minimize, Bounds
+# from fcmaes.bitecpp import minimize, Bounds
 
 
 """
@@ -40,6 +41,8 @@ So, current VEHICLE parameters to optimize are:
 So, full list of parameters is:
 - cam_ty, cam_rx, cam_rz, cam_fx, veh_ry1, veh_model1, veh_ry2, veh_model2, ...
 """
+
+
 class ReprojSolver():
     base_params_size = 4
     variadic_params_size = 2
@@ -115,9 +118,10 @@ class ReprojSolver():
                           bounds=bounds,
                           popsize=32,
                           max_evaluations=256,
-                          ints=ints)
+                          ints=ints
+                        )
 
-        # print(result)
+        print(result)
 
         return result.x
 
@@ -126,6 +130,7 @@ class ReprojSolver():
         """
         x = cam_ty, cam_rx, cam_rz, cam_fx, veh_ry1, veh_model1, veh_ry2, veh_model2, ...
         """
+
         # cars_2d = args[0]
         cars_2d = deepcopy(self._cars_2d)
 
