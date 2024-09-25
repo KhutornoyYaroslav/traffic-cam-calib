@@ -1,4 +1,5 @@
 import json
+import cv2 as cv
 import numpy as np
 from typing import List, Union, Dict
 from core.camera.camera import Camera
@@ -223,6 +224,25 @@ class CarSkeleton3d(Skeleton3d):
             pt_3d = self.world_node(label)
             pt_2d = camera.project_points([pt_3d])
             if pt_2d is not None:
-                result[label] = pt_2d[0]
+                result[label] = pt_2d[0].astype(np.int)
 
         return result
+
+    def get_brect_and_mask(self, camera: Camera):
+        # get full skeleton projection
+        keypoints = self.get_projection(camera, only_visible_nodes=False)
+        if not len(keypoints):
+            return None, None
+
+        # get brect
+        pts = list(keypoints.values())
+        pts = np.stack(pts, 0).astype(np.int32)
+        brect = cv.boundingRect(pts)
+
+        # get mask as convex hull
+        conv_hull = cv.convexHull(pts)
+        conv_hull -= brect[0:2]
+        mask = np.zeros(shape=(brect[3], brect[2]), dtype=np.uint8)
+        cv.drawContours(mask, [conv_hull], 0, color=(255), thickness=-1)
+
+        return brect, mask  # [x, y, w, h], np.array(uint8)

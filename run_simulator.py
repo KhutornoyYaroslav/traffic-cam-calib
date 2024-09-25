@@ -6,12 +6,9 @@ from gui.matplot.drawer import Drawer
 from gui.matplot.drawers.route import RouteDrawer
 from gui.matplot.drawers.car import CarSkeletonDrawer
 from gui.matplot.drawers.planegrid import PlaneGrid
+from simulation.dumper.writer import DumpWriter
 
-from calibration.pnp.optimization.reproj import ReprojSolver
-from glob import glob
-from core.objects.carskeleton3d import CarSkeleton3d, LABELS
 
-from core.camera.camera import Camera
 
 def signal_handler(sig, frame):
     global interrupted
@@ -43,15 +40,10 @@ def run_simulator(config_path: str,
 
     # create gui
     drawer = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
-    drawer2 = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
 
-    # create solver
-    car_models = []
-    for model_file in sorted(glob("data/car_models/*.json")):
-        car = CarSkeleton3d()
-        car.load_from_file(model_file, LABELS)
-        car_models.append(car)
-    bounds = [(-10.0, 0.0), (-30.0, 0.0), (-10.0, 10.0), (1.0, 120.0), (0.0, 360.0), (0, len(car_models) - 1)]
+    # create dumper
+    dumper = DumpWriter()
+    dumper.create_output_dir("/home/yaroslav/repos/traffic-cam-calib/dumps/sim4")
 
     # main loop
     time_current = time_start
@@ -61,38 +53,42 @@ def run_simulator(config_path: str,
     for route in simulator.get_routes():
         static_drawables.append(RouteDrawer(route))
 
+    frame_cnt = 0
     while not interrupted and time_current < time_finish:
-        # print(f"Update simulation at {time_current:.2f}s.")
+        print(f"Update simulation at {time_current:.2f}s.")
         simulator.update(time_current)
         time_current += (-1 if reverse_time else 1) * time_step
 
-        # calibrate
-        camera = list(simulator.get_cameras().values())[0]
-        # camera_res = None
-        cars_2d = []
-        for car in simulator.get_cars():
-            car2d = car.get_projection(camera, only_visible_nodes=True)
-            cars_2d.append(car2d)
-        if len(cars_2d) == 2:
-            solver = ReprojSolver(camera.img_w, camera.img_h, bounds, car_models)
-            results = solver.solve(cars_2d)
-            # print('results: ')
-            print("cam_ty: {:.2f}\tcam_rx: {:.2f}\tcam_rz: {:.2f}\tcam_fx: {:.2f}".format(*results[:4]))
-
-            # camera_res = Camera(aov_h=results[3],
-            #                     img_size=(camera.img_w, camera.img_h),
-            #                     pose=(camera.pose[0], results[0], camera.pose[2]),
-            #                     eulers=(results[1], camera.eulers[1], results[2]))
-
-        # draw
+        # # draw
         # dynamic_drawables = []
         # for car in simulator.get_cars():
         #     dynamic_drawables.append(CarSkeletonDrawer(car))
         # cameras = simulator.get_cameras()
         # drawer.draw(cameras, static_drawables + dynamic_drawables, autoplay)
 
-        # if camera_res is not None:
-        #     drawer2.draw({'res_cam': camera_res}, static_drawables + dynamic_drawables, autoplay)
+        # dump
+        camera = list(simulator.get_cameras().values())[0]
+
+        car_keypoints = []
+        car_brects = []
+        car_masks = []
+        for car in simulator.get_cars():
+            car2d = car.get_projection(camera, only_visible_nodes=True)
+
+            # for k in car2d.keys():
+            #     car2d[k] += np.random.normal(0.0, 3.0, 2).astype(np.int32)
+                
+            brect, mask = car.get_brect_and_mask(camera)
+            car_keypoints.append(car2d)
+            car_brects.append(brect)
+            car_masks.append(mask)
+
+        dumper.write_frame_data(frame_idx=frame_cnt,
+                                frame_size=(camera.img_w, camera.img_h),
+                                car_keypoints=car_keypoints,
+                                car_brects=car_brects,
+                                car_masks=car_masks)
+        frame_cnt += 1
 
     print(f"Simulation finished.")
 
@@ -100,7 +96,7 @@ def run_simulator(config_path: str,
 if __name__ == "__main__":
     # parse args
     parser = argparse.ArgumentParser(description='Traffic Scene Simulator')
-    parser.add_argument("-c", "--config-file", dest="config_file", type=str, default="config/simulation/sim_1.json",
+    parser.add_argument("-c", "--config-file", dest="config_file", type=str, default="config/simulation/sim_2.json",
                         help="Path to config file")
     parser.add_argument("-a", "--autoplay", dest="autoplay", type=str2bool, default='True',
                         help="Wheter to autoplay or by key press")
@@ -108,7 +104,7 @@ if __name__ == "__main__":
                         help="Simulation start timestamp")
     parser.add_argument("-tf", "--time-finish", dest="time_finish", type=float, default=100.0,
                         help="Simulation finish timestamp")
-    parser.add_argument("-dt", "--time-step", dest="time_step", type=float, default=0.2,
+    parser.add_argument("-dt", "--time-step", dest="time_step", type=float, default=0.05,
                         help="Simulation time step")
     args = parser.parse_args()
 
