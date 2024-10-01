@@ -1,18 +1,23 @@
 import numpy as np
 from copy import deepcopy
 from typing import Union, Dict
+from numpy.typing import ArrayLike
 from core.math.eulers import eulers2rotmat
-from core.common.transformable import Transformable, check_value
+from core.common.transformable import Transformable
+
+
+def _check_value(val: ArrayLike):
+    val = np.asarray(val, dtype=np.float32)
+    if val.size != 3:
+        raise ValueError("The value must have the size = 3")
+
+    return val
 
 
 class Skeleton3d(Transformable):
-    def __init__(self,
-                 nodes: Dict[str,  Union[list, tuple, np.ndarray]],
-                 edges: list,
-                 *args,
-                 **kwargs):
+    def __init__(self, nodes: Dict[str,  ArrayLike], edges: list, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._nodes = dict([(k, check_value(v)) for k, v in nodes.items()])
+        self._nodes = dict([(k, _check_value(v)) for k, v in nodes.items()])
         self._edges = edges
 
     @property
@@ -20,8 +25,8 @@ class Skeleton3d(Transformable):
         return deepcopy(self._nodes)
 
     @nodes.setter
-    def nodes(self, val: Dict[str,  Union[list, tuple, np.ndarray]]):
-        self._nodes = dict([(k, check_value(v)) for k, v in val.items()])
+    def nodes(self, val: Dict[str, ArrayLike]):
+        self._nodes = dict([(k, _check_value(v)) for k, v in val.items()])
 
     @property
     def edges(self) -> list:

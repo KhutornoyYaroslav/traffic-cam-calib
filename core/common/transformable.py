@@ -1,23 +1,22 @@
 import numpy as np
-from typing import Union
+from numpy.typing import ArrayLike
 
 
-def check_value(val: Union[list, tuple, np.ndarray]):
-    if isinstance(val, (list, tuple)):
-        val = np.array(val, np.float32)
+def _check_value(val: ArrayLike):
+    val = np.asarray(val, dtype=np.float32)
     if val.size != 3:
-        raise ValueError("Value must have size=3")
+        raise ValueError("The value must have the size = 3")
 
     return val
 
 
 class Transformable():
     def __init__(self,
-                 pose: Union[list, tuple, np.ndarray] = [0., 0., 0.],
-                 eulers: Union[list, tuple, np.ndarray] = [0., 0., 0.],
+                 pose: ArrayLike = [0., 0., 0.],
+                 eulers: ArrayLike = [0., 0., 0.],
                  scale: float = 1.):
-        self._pose = check_value(pose)
-        self._eulers = check_value(eulers)
+        self._pose = _check_value(pose)
+        self._eulers = _check_value(eulers)
         self._scale = scale
 
     @property
@@ -25,16 +24,17 @@ class Transformable():
         return self._pose.copy()
 
     @pose.setter
-    def pose(self, val: Union[list, tuple, np.ndarray]):
-        self._pose = check_value(val)
+    def pose(self, val: ArrayLike):
+        self._pose = _check_value(val)
 
     @property
     def eulers(self) -> np.ndarray:
         return self._eulers.copy()
 
     @eulers.setter
-    def eulers(self, val: Union[list, tuple, np.ndarray]):
-        self._eulers = check_value(val)
+    def eulers(self, val: ArrayLike):
+        self._eulers = _check_value(val)
+        self._eulers %= 360.0
 
     @property
     def scale(self) -> float:

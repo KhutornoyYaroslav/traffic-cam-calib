@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
-from simulation.routing.route import Route
+from simulation.routing import Route
 
 
 def draw_scene(ax: Axes, route: Route, s: float):

@@ -160,4 +160,5 @@ cython_debug/
 #.idea/
 
 # Custom rules
-# /data/models/*
+/data/*
+!/data/car_models/*

@@ -1,13 +1,10 @@
 import signal
 import argparse
-from simulation.simulator.simulator import Simulator
-from simulation.simulator.configurator import Configurator
+from tqdm import tqdm
+from simulation.simulator import Simulator, Configurator
 from gui.matplot.drawer import Drawer
-from gui.matplot.drawers.route import RouteDrawer
-from gui.matplot.drawers.car import CarSkeletonDrawer
-from gui.matplot.drawers.planegrid import PlaneGrid
+from gui.matplot.drawers import RouteDrawer, KeypointsDrawer
 from simulation.dumper.writer import DumpWriter
-
 
 
 def signal_handler(sig, frame):
@@ -29,7 +26,7 @@ def run_simulator(config_path: str,
                   time_start: float,
                   time_finish: float,
                   time_step: float,
-                  autoplay: bool = True):
+                  autoplay: bool = True) -> bool:
     global interrupted
     interrupted = False
 
@@ -43,60 +40,59 @@ def run_simulator(config_path: str,
 
     # create dumper
     dumper = DumpWriter()
-    dumper.create_output_dir("/home/yaroslav/repos/traffic-cam-calib/dumps/sim4")
+    dumper.init(output_root="/home/yaroslav/repos/traffic-cam-calib/data/dumps/sim4")
+    dumper.copy_config(config_path)
 
     # main loop
     time_current = time_start
     reverse_time = time_finish < time_start
 
-    static_drawables = [] # [PlaneGrid((-5, 5), (-20, 70))]
+    static_drawables = []
     for route in simulator.get_routes():
         static_drawables.append(RouteDrawer(route))
 
+    print(f"Simulation progress (frames: current/total)")
+    pbar = tqdm(total=int((time_finish - time_current) / time_step))
+
     frame_cnt = 0
     while not interrupted and time_current < time_finish:
-        print(f"Update simulation at {time_current:.2f}s.")
+        # update scene
         simulator.update(time_current)
         time_current += (-1 if reverse_time else 1) * time_step
 
-        # # draw
-        # dynamic_drawables = []
-        # for car in simulator.get_cars():
-        #     dynamic_drawables.append(CarSkeletonDrawer(car))
-        # cameras = simulator.get_cameras()
-        # drawer.draw(cameras, static_drawables + dynamic_drawables, autoplay)
-
+        # get objects
+        camera = simulator.get_camera()
+        cars = simulator.get_projected_cars(camera, only_visible_nodes=True)
+        
         # dump
-        camera = list(simulator.get_cameras().values())[0]
-
-        car_keypoints = []
-        car_brects = []
-        car_masks = []
-        for car in simulator.get_cars():
-            car2d = car.get_projection(camera, only_visible_nodes=True)
-
-            # for k in car2d.keys():
-            #     car2d[k] += np.random.normal(0.0, 3.0, 2).astype(np.int32)
-                
-            brect, mask = car.get_brect_and_mask(camera)
-            car_keypoints.append(car2d)
-            car_brects.append(brect)
-            car_masks.append(mask)
-
+        car_model_names = [c[0].get_model_name() for c in cars]
+        car_keypoints = [c[1] for c in cars]
+        car_brects = [c[2] for c in cars]
+        car_masks = [c[3] for c in cars]
         dumper.write_frame_data(frame_idx=frame_cnt,
                                 frame_size=(camera.img_w, camera.img_h),
                                 car_keypoints=car_keypoints,
                                 car_brects=car_brects,
-                                car_masks=car_masks)
+                                car_masks=car_masks,
+                                car_model_names=car_model_names)
+
+        # # draw
+        # dynamic_drawables = []
+        # for keypoints in car_keypoints:
+        #     dynamic_drawables.append(KeypointsDrawer(keypoints))
+        # drawer.draw({"": camera}, static_drawables + dynamic_drawables, autoplay)
+
         frame_cnt += 1
+        pbar.update(1)
 
     print(f"Simulation finished.")
+    return True
 
 
 if __name__ == "__main__":
     # parse args
     parser = argparse.ArgumentParser(description='Traffic Scene Simulator')
-    parser.add_argument("-c", "--config-file", dest="config_file", type=str, default="config/simulation/sim_2.json",
+    parser.add_argument("-c", "--config-file", dest="config_file", type=str, default="config/simulation/sim_1.json",
                         help="Path to config file")
     parser.add_argument("-a", "--autoplay", dest="autoplay", type=str2bool, default='True',
                         help="Wheter to autoplay or by key press")

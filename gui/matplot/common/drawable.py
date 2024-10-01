@@ -1,6 +1,6 @@
 from typing import Tuple
 from matplotlib.axes import Axes
-from core.camera.camera import Camera
+from core.camera import Camera
 
 
 class Drawable():

@@ -1,7 +1,7 @@
 import json
-from simulation.scene.scene import Scene
-from simulation.routing.route import Route
-from core.objects.carskeleton3d import CarSkeleton3d
+from simulation.scene import Scene
+from simulation.routing import Route
+from core.objects import CarSkeleton3d
 from core.objects.carskeleton3d import LABELS as car_keypoints_labels
 
 

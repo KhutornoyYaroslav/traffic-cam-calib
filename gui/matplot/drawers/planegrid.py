@@ -3,7 +3,7 @@ from typing import Tuple
 from gui.matplot.common.drawable import Drawable, Axes, Camera
 
 
-class PlaneGrid(Drawable):
+class PlaneGridDrawer(Drawable):
     def __init__(self, x_range: Tuple[float, float],
                        z_range: Tuple[float, float],
                        step: float = 1.0):

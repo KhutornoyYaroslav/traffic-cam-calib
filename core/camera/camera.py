@@ -1,11 +1,15 @@
 import numpy as np
-from typing import Tuple, Union
+from numpy.typing import ArrayLike
+from typing import Tuple, Optional
 from core.math.eulers import eulers2rotmat
 from core.math.geometry import line_plane_intersection
 from core.common.transformable import Transformable
 
 
 class Camera(Transformable):
+    z_clipping_near = 0.001
+    z_clipping_far = 1000.0
+
     """
     Camera class allows you to project 3d world points onto the image plane.
     It uses the right-handed coordinate system. Positive rotations are clockwise.
@@ -14,14 +18,12 @@ class Camera(Transformable):
     def __init__(self,
                  aov_h: float = 45.0,
                  img_size: Tuple[int, int] = (1920, 1080),
-                 pose: Union[list, tuple, np.ndarray] = [0., 0., 0.],
-                 eulers: Union[list, tuple, np.ndarray] = [0., 0., 0.]):
+                 pose: ArrayLike = [0., 0., 0.],
+                 eulers: ArrayLike = [0., 0., 0.]):
         super().__init__(pose, eulers)
         self.aov_h = aov_h
         self.img_w = img_size[0]
         self.img_h = img_size[1]
-        self.z_clipping_far = 1000.0
-        self.z_clipping_near = 0.001
 
     def get_intrinsic_matrix(self):
         mat = np.zeros((3, 3), dtype=np.float32)
@@ -48,8 +50,8 @@ class Camera(Transformable):
     def unproject_point(self,
                         point2d: np.ndarray,
                         plane_norm: np.ndarray,
-                        plane_orig: np.ndarray) -> Union[np.ndarray, None]:
-        # TODO: check with geoemtry.line_plane_intersection
+                        plane_orig: np.ndarray) -> Optional[np.ndarray]:
+        # TODO: check with geometry.line_plane_intersection
         intr_mat = self.get_intrinsic_matrix()
         rot_mat = eulers2rotmat(self.eulers, degrees=True)
         direction = np.matmul(rot_mat, np.matmul(np.linalg.inv(intr_mat), np.append(point2d, 1.0)))

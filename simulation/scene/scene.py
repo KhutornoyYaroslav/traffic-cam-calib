@@ -2,8 +2,8 @@ import numpy as np
 from glob import glob
 from typing import List
 from copy import deepcopy
-from simulation.routing.route import Route
-from core.objects.carskeleton3d import CarSkeleton3d
+from simulation.routing import Route
+from core.objects import CarSkeleton3d
 
 
 """
@@ -62,6 +62,5 @@ class Scene():
             car.pose = route.interpolate_pose(ts)
             car.eulers = route.interpolate_eulers(ts)
             if route.cycle_changed():
-                # print(f"Route {r_idx} cycle counts: {route.cycle_count()}")
                 if c_idx in self.car_idxs_to_randomize:
                     car.load_from_file(self.get_random_car_model_filepath())

@@ -1,8 +1,16 @@
 import numpy as np
-from typing import Tuple
+from numpy.typing import ArrayLike
 
 
-def eulers2rotmat(eulers: Tuple[float, float, float], order: str = 'YXZ', degrees: bool = False):
+def _check_value(val: ArrayLike):
+    val = np.asarray(val, dtype=np.float32)
+    if val.size != 3:
+        raise ValueError("The value must have the size = 3")
+
+    return val
+
+
+def eulers2rotmat(eulers: ArrayLike, order: str = 'YXZ', degrees: bool = False) -> np.ndarray:
     """
     Creates rotation matrix from Euler anlges.
 
@@ -17,6 +25,7 @@ def eulers2rotmat(eulers: Tuple[float, float, float], order: str = 'YXZ', degree
         rot : array
             Rotation matrix with shape (3, 3).
     """
+    eulers = _check_value(eulers)
     if degrees:
         eulers = np.radians(eulers)
 
@@ -45,12 +54,12 @@ def eulers2rotmat(eulers: Tuple[float, float, float], order: str = 'YXZ', degree
     return r
 
 
-def heading_to_eulers(heading: np.ndarray, degrees: bool = False) -> np.ndarray:
-    result = np.zeros(3, np.float32)
+def heading_to_eulers(heading: ArrayLike, degrees: bool = False) -> np.ndarray:
+    heading = _check_value(heading)
     heading = heading / np.linalg.norm(heading)
+
+    result = np.zeros(3, np.float32)
     result[0] = -np.arcsin(heading[1])
     result[1] = np.arctan2(heading[0], heading[2])
-    if degrees:
-        result = np.degrees(result)
 
-    return result
+    return np.degrees(result) if degrees else result

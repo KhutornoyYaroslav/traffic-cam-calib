@@ -1,47 +1,49 @@
 {
     "scene_config_path": "config/scene/scene_2.json",
-    "cameras": [
-        {
-            "name": "cam_1",
-            "params": {
-                "aov_h": 50.0,
-                "img_w": 1920,
-                "img_h": 1080,
-                "pose": {
-                    "x": -5.0,
-                    "y": -5.0,
-                    "z": -15.0
-                },
-                "eulers": {
-                    "x": -15.0,
-                    "y": 20.0,
-                    "z": 0.0
-                }
+    "camera": {
+        "params": {
+            "aov_h": 60.0,
+            "img_w": 1920,
+            "img_h": 1080,
+            "pose": {
+                "x": 0.0,
+                "y": -7.0,
+                "z": -10.0
             },
-            "errors": {
-                "pose": {
-                    "x_std": 0.0,
-                    "y_std": 0.0,
-                    "z_std": 0.0
-                },
-                "eulers": {
-                    "x_std": 0.0,
-                    "y_std": 0.0,
-                    "z_std": 0.0
-                }
+            "eulers": {
+                "x": -23.0,
+                "y": 0.0,
+                "z": 5.0
+            }
+        },
+        "errors": {
+            "pose": {
+                "x_std": 0.01,
+                "y_std": 0.01,
+                "z_std": 0.01
+            },
+            "eulers": {
+                "x_std": 0.1,
+                "y_std": 0.1,
+                "z_std": 0.1
             }
         }
-    ],
+    },
     "cars_errors": {
         "pose": {
-            "x_std": 0.0,
-            "y_std": 0.0,
+            "x_std": 0.5,
+            "y_std": 0.05,
             "z_std": 0.0
         },
         "eulers": {
-            "x_std": 0.0,
-            "y_std": 0.0,
-            "z_std": 0.0
-        }
+            "x_std": 1.0,
+            "y_std": 3.0,
+            "z_std": 1.0
+        },
+        "projection": {
+            "x_std": 0.01,
+            "y_std": 0.01
+        },
+        "detection_score": 0.8
     }
 }

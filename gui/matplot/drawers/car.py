@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
-from core.objects.carskeleton3d import CarSkeleton3d, LABELS
+from core.objects import CarSkeleton3d
+from core.objects.carskeleton3d import LABELS
 from gui.matplot.common.drawable import Drawable, Axes, Camera
 
 
@@ -10,25 +11,17 @@ class CarSkeletonDrawer(Drawable):
         self._color = (1.0, 0.5, 0.5)
 
     def draw(self, canvas: Axes, camera: Camera):
-        # # draw edges
-        # for idx1, idx2 in self._car_skeleton.edges:
-        #     res = camera.project_line(self._car_skeleton.world_node(LABELS[idx1]), self._car_skeleton.world_node(LABELS[idx2]))
-        #     if res is not None:
-        #         res = np.stack(res, 0)
-        #         canvas.plot(res[:, 0], res[:, 1], color=self._color, lw=1, alpha=0.5)
+        # draw edges
+        for idx1, idx2 in self._car_skeleton.edges:
+            res = camera.project_line(self._car_skeleton.world_node(LABELS[idx1]), self._car_skeleton.world_node(LABELS[idx2]))
+            if res is not None:
+                res = np.stack(res, 0)
+                canvas.plot(res[:, 0], res[:, 1], color=self._color, lw=1, alpha=0.5)
 
-        # draw visible nodes
-        nodes_2d = self._car_skeleton.get_projection(camera, only_visible_nodes=True)
-        for point2d in nodes_2d.values():
-            canvas.plot(point2d[0], point2d[1], 'o', color=(0.7, 0, 0), markersize=2)
-
-        # # brect
-        # nodes_2d = self._car_skeleton.get_projection(camera, only_visible=False)
-        # if len(nodes_2d):
-        #     arr = np.stack(list(nodes_2d.values()), 0)
-        #     arr = arr.astype(np.int32)
-        #     brect = cv.boundingRect(arr)
-        #     print(brect)
+        # # draw visible nodes
+        # nodes_2d = self._car_skeleton.get_projection(camera, only_visible_nodes=True)
+        # for point2d in nodes_2d.values():
+        #     canvas.plot(point2d[0], point2d[1], 'o', color=(0.7, 0, 0), markersize=2)
 
         # # draw centroid
         # pts = np.expand_dims(self.world_centroid(), 0)

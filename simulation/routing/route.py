@@ -1,34 +1,32 @@
 import numpy as np
-from typing import Union
+from numpy.typing import ArrayLike
 from copy import deepcopy
 from core.math.eulers import heading_to_eulers
 
 
-def check_waypoints(val: Union[list, np.ndarray]):
-    if isinstance(val, list):
-        val = np.array(val, np.float32)
+def _check_waypoints(val: ArrayLike):
+    val = np.asarray(val, dtype=np.float32)
     if val.ndim != 2 or val.shape[1] != 3:
-        raise ValueError("Value must have shape (N, 3)")
+        raise ValueError("The value must have the shape = (N, 3)")
 
     return val
 
 
-def check_dts(val: Union[list, np.ndarray]):
-    if isinstance(val, list):
-        val = np.array(val, np.float32)
+def _check_dts(val: ArrayLike):
+    val = np.asarray(val, dtype=np.float32)
     if val.ndim != 1:
-        raise ValueError("Value must have single dimension")
+        raise ValueError("The value must have one dimension")
 
     return val
 
 
 class Route():
     def __init__(self,
-                 waypoints: Union[list, np.ndarray],
-                 dts: Union[list, np.ndarray],
+                 waypoints: ArrayLike,
+                 dts: ArrayLike,
                  loop_enable: bool = False):
-        self._waypoints = check_waypoints(waypoints)
-        self._dts = check_dts(dts)
+        self._waypoints = _check_waypoints(waypoints)
+        self._dts = _check_dts(dts)
         assert self._waypoints.shape[0] - self._dts.shape[0] == 1
         self.loop_enable = loop_enable
         self._prev_cycle = None
@@ -40,16 +38,16 @@ class Route():
         return deepcopy(self._waypoints)
 
     @waypoints.setter
-    def waypoints(self, val: Union[list, np.ndarray]):
-        self._waypoints = check_waypoints(val)
+    def waypoints(self, val: ArrayLike):
+        self._waypoints = _check_waypoints(val)
 
     @property
     def dts(self) -> np.ndarray:
         return deepcopy(self._dts)
 
     @dts.setter
-    def dts(self, val: Union[list, np.ndarray]):
-        self._dts = check_dts(val)
+    def dts(self, val: ArrayLike):
+        self._dts = _check_dts(val)
 
     def length(self) -> float:
         result = 0.0

@@ -1,8 +1,9 @@
 import json
 import cv2 as cv
 import numpy as np
-from typing import List, Union, Dict
-from core.camera.camera import Camera
+from numpy.typing import ArrayLike
+from typing import List, Dict, Optional
+from core.camera import Camera
 from core.objects.skeleton3d import Skeleton3d
 from core.math.geometry import plane_normal, vectors_angle
 
@@ -161,8 +162,9 @@ VISIBILITY_POINT_FACE_MAP = {
 class CarSkeleton3d(Skeleton3d):
     def __init__(self, *args, **kwargs):
         super().__init__({}, EDGES, *args, **kwargs)
+        self._model_name = None
 
-    def load_from_file(self, path: str, labels_filter: Union[List[str], None] = None):
+    def load_from_file(self, path: str, labels_filter: Optional[List[str]] = None):
         nodes = {}
         with open(path, 'r') as f:
             data = json.load(f)
@@ -173,7 +175,11 @@ class CarSkeleton3d(Skeleton3d):
                     continue
                 if file_vertex_idx >= 0 and file_vertex_idx < len(file_vertices):
                     nodes[file_label] = file_vertices[file_vertex_idx]
+            self._model_name = data.get('name', None)
         self.nodes = nodes
+
+    def get_model_name(self) -> Optional[str]:
+        return self._model_name
 
     def get_visible_node_labels(self, camera: Camera, max_angle: float = 82.5) -> List[str]:
         result = []
@@ -228,9 +234,8 @@ class CarSkeleton3d(Skeleton3d):
 
         return result
 
-    def get_brect_and_mask(self, camera: Camera):
-        # get full skeleton projection
-        keypoints = self.get_projection(camera, only_visible_nodes=False)
+    @staticmethod
+    def get_brect_and_mask(keypoints: Dict[str, ArrayLike]):
         if not len(keypoints):
             return None, None
 
