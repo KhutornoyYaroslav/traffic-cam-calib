@@ -23,10 +23,10 @@ def on_keyboard_press(event):
 
 
 def run_simulator(config_path: str,
-                  time_start: float,
-                  time_finish: float,
+                  total_cars: int,
                   time_step: float,
-                  autoplay: bool = True) -> bool:
+                  autoplay: bool = True,
+                  draw_mode: bool = True) -> bool:
     global interrupted
     interrupted = False
 
@@ -35,79 +35,85 @@ def run_simulator(config_path: str,
     configurator = Configurator(simulator)
     configurator.configurate(config_path)
 
-    # create gui
-    drawer = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
-
-    # create dumper
-    dumper = DumpWriter()
-    dumper.init(output_root="/home/yaroslav/repos/traffic-cam-calib/data/dumps/sim4")
-    dumper.copy_config(config_path)
+    # create gui/dumper
+    if draw_mode:
+        drawer = Drawer(on_keyboard_press=on_keyboard_press, plt_cols=2)
+        static_drawables = []
+        for route in simulator.get_routes():
+            static_drawables.append(RouteDrawer(route))
+    else:
+        dumper = DumpWriter()
+        dumper.init(output_root="/home/yaroslav/repos/traffic-cam-calib/data/dumps/sim5")
+        dumper.copy_config(config_path)
 
     # main loop
-    time_current = time_start
-    reverse_time = time_finish < time_start
+    print(f"Simulation progress (cars: current/total)")
+    pbar = tqdm(total=int(total_cars))
 
-    static_drawables = []
-    for route in simulator.get_routes():
-        static_drawables.append(RouteDrawer(route))
-
-    print(f"Simulation progress (frames: current/total)")
-    pbar = tqdm(total=int((time_finish - time_current) / time_step))
-
+    cur_cars = 0
     frame_cnt = 0
-    while not interrupted and time_current < time_finish:
+    time_current = 0.0   
+
+    while not interrupted and cur_cars < total_cars:
         # update scene
         simulator.update(time_current)
-        time_current += (-1 if reverse_time else 1) * time_step
+        time_current += time_step
 
         # get objects
         camera = simulator.get_camera()
         cars = simulator.get_projected_cars(camera, only_visible_nodes=True)
-        
-        # dump
+
         car_model_names = [c[0].get_model_name() for c in cars]
         car_keypoints = [c[1] for c in cars]
         car_brects = [c[2] for c in cars]
         car_masks = [c[3] for c in cars]
-        dumper.write_frame_data(frame_idx=frame_cnt,
-                                frame_size=(camera.img_w, camera.img_h),
-                                car_keypoints=car_keypoints,
-                                car_brects=car_brects,
-                                car_masks=car_masks,
-                                car_model_names=car_model_names)
 
-        # # draw
-        # dynamic_drawables = []
-        # for keypoints in car_keypoints:
-        #     dynamic_drawables.append(KeypointsDrawer(keypoints))
-        # drawer.draw({"": camera}, static_drawables + dynamic_drawables, autoplay)
+        # draw/dump
+        if draw_mode:
+            dynamic_drawables = []
+            for keypoints in car_keypoints:
+                dynamic_drawables.append(KeypointsDrawer(keypoints))
+            drawer.draw({"": camera}, static_drawables + dynamic_drawables, autoplay)
+        else:
+            dumper.write_frame_data(frame_idx=frame_cnt,
+                                    frame_size=(camera.img_w, camera.img_h),
+                                    car_keypoints=car_keypoints,
+                                    car_brects=car_brects,
+                                    car_masks=car_masks,
+                                    car_model_names=car_model_names)
 
+        # update counters
         frame_cnt += 1
-        pbar.update(1)
+        cur_cars += len(cars)
+        pbar.update(len(cars))
 
     print(f"Simulation finished.")
     return True
 
 
-if __name__ == "__main__":
+def str2bool(s):
+    return s.lower() in ('true', '1')
+
+
+if __name__ == '__main__':
     # parse args
     parser = argparse.ArgumentParser(description='Traffic Scene Simulator')
-    parser.add_argument("-c", "--config-file", dest="config_file", type=str, default="config/simulation/sim_1.json",
+    parser.add_argument("-c", "--config-file", dest="config_file", type=str, default="config/simulation/sim_test.json",
                         help="Path to config file")
-    parser.add_argument("-a", "--autoplay", dest="autoplay", type=str2bool, default='True',
+    parser.add_argument("-a", "--autoplay", dest="autoplay", type=str2bool, default=1,
                         help="Wheter to autoplay or by key press")
-    parser.add_argument("-ts", "--time-start", dest="time_start", type=float, default=0.0,
-                        help="Simulation start timestamp")
-    parser.add_argument("-tf", "--time-finish", dest="time_finish", type=float, default=100.0,
-                        help="Simulation finish timestamp")
-    parser.add_argument("-dt", "--time-step", dest="time_step", type=float, default=0.05,
-                        help="Simulation time step")
+    parser.add_argument("-d", "--draw-mode", dest="draw_mode", type=str2bool, default=1,
+                        help="Wheter to draw scene or dump jsons")
+    parser.add_argument("--total-cars", dest="total_cars", type=int, default=250,
+                        help="Total number of cars to generate")
+    parser.add_argument("--time-step", dest="time_step", type=float, default=0.05,
+                        help="Time step (FPS of camera)")
     args = parser.parse_args()
 
     # run
     signal.signal(signal.SIGINT, signal_handler)
     run_simulator(args.config_file,
-                  args.time_start,
-                  args.time_finish,
+                  args.total_cars,
                   args.time_step,
-                  args.autoplay)
+                  args.autoplay,
+                  args.draw_mode)
